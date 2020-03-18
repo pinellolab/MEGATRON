@@ -1,4 +1,4 @@
 # MEGATRON
 MEGA TRajectories of clONes
 
-<img src="images/img1.jpg">
+<img src="images/img1.jpg" width="50%" height="50%">
