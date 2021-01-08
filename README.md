@@ -1,4 +1,5 @@
 # MEGATRON
-MEGA TRajectories of clONes
 
-<img src="images/img1.png" width="50%" height="50%">
+**MEGA** **TR**ajectories of cl**ON**es
+
+![megatron](./docs/static/img/logo_200x204.png?raw=true)
