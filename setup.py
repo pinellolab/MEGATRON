@@ -10,7 +10,7 @@ setup(
     version='0.1a',
     author='Huidong Chen',
     athor_email='huidong.chen AT mgh DOT harvard DOT edu',
-    license='MIT',
+    license='BSD',
     description='MEGA TRajectories of clONes',
     long_description=Path('README.md').read_text('utf-8'),
     long_description_content_type="text/markdown",
@@ -18,7 +18,7 @@ setup(
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
