@@ -329,13 +329,13 @@ def filter_samples(adata,
 
 
 def filter_cells_rna(adata,
-                    min_n_genes=None,
-                    max_n_genes=None,
-                    min_pct_genes=None,
-                    max_pct_genes=None,
-                    min_n_counts=None,
-                    max_n_counts=None,
-                    expr_cutoff=1):
+                     min_n_genes=None,
+                     max_n_genes=None,
+                     min_pct_genes=None,
+                     max_pct_genes=None,
+                     min_n_counts=None,
+                     max_n_counts=None,
+                     expr_cutoff=1):
     """Filter out cells for RNA-seq based on different metrics.
     Parameters
     ----------
@@ -777,7 +777,7 @@ def filter_features(adata,
 
 
 def add_clones(adata,
-               mat=None,
+               mat,
                anno_clone=None):
     """Add clonal information into anndata object
     Parameters
@@ -796,14 +796,16 @@ def add_clones(adata,
         Store annotation of clones
     """
 
-    if (mat is None) or (anno_clone is None):
-        return "Both `mat` and `anno_clone` need to be specified."
+    if not issparse(mat):
+        mat = csr_matrix(mat)
+    if anno_clone is None:
+        anno_clone = pd.DataFrame(
+            index=np.arange(mat.shape[1]).astype(str))
     assert isinstance(anno_clone, pd.DataFrame),\
         "'anno_clone' must be pd.DataFrame"
     assert mat.shape[1] == anno_clone.shape[0],\
         "clone and its annotation must match"
-    if not issparse(mat):
-        mat = csr_matrix(mat)
+
     adata.obsm['X_clone'] = mat.copy()
     adata.uns['clone'] = dict()
     adata.uns['clone']['anno'] = anno_clone.copy()
