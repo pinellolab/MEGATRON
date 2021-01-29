@@ -9,3 +9,4 @@ matplotlib>=3.3
 umap-learn>=0.4.6
 networkx>=2.2.0
 kneed>=0.7
+adjusttext>=0.7.3

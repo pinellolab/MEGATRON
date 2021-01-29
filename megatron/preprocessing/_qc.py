@@ -802,6 +802,8 @@ def add_clones(adata,
         "'anno_clone' must be pd.DataFrame"
     assert mat.shape[1] == anno_clone.shape[0],\
         "clone and its annotation must match"
+    if not issparse(mat):
+        mat = csr_matrix(mat)
     adata.obsm['X_clone'] = mat.copy()
     adata.uns['clone'] = dict()
     adata.uns['clone']['anno'] = anno_clone.copy()
