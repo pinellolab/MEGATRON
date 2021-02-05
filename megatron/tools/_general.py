@@ -4,17 +4,14 @@ from scipy.cluster.hierarchy import (
     dendrogram, linkage, fcluster)
 
 
-def cluster_clones(adata,
-                   n_clusters,
-                   method='hierarchical',
-                   **kwargs):
-    """Cluster clones
-    Parameters
-    ----------
-    Returns
-    -------
+def _cluster(adata,
+             n_clusters,
+             target='clone',
+             method='hierarchical',
+             **kwargs):
+    """Cluster clones or clone trajectories
     """
-    list_dist = adata.uns['clone']['distance']
+    list_dist = adata.uns[target]['distance']
     if method == 'hierarchical':
         Z = linkage(list_dist,
                     'ward',
@@ -26,4 +23,41 @@ def cluster_clones(adata,
     else:
         raise ValueError(
             f'unrecognized method `{method}`')
-    adata.uns['clone']['anno'][method] = clusters.astype(str)
+    adata.uns[target]['anno'][method] = clusters.astype(str)
+
+
+def cluster_clones(adata,
+                   n_clusters=2,
+                   method='hierarchical',
+                   **kwargs):
+    """Cluster clones
+
+    Parameters
+    ----------
+    Returns
+    -------
+    """
+    _cluster(adata,
+             n_clusters=n_clusters,
+             method=method,
+             target='clone',
+             **kwargs)
+
+
+def cluster_clone_traj(adata,
+                       n_clusters=2,
+                       method='hierarchical',
+                       **kwargs):
+    """Cluster clone paths
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    """
+    _cluster(adata,
+             n_clusters=n_clusters,
+             method=method,
+             target='clone_traj',
+             **kwargs)

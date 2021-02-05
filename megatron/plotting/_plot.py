@@ -631,25 +631,26 @@ def umap(adata,
                    **kwargs)
 
 
-def clone_scatter(adata,
-                  group,
-                  obsm=None,
-                  layer=None,
-                  comp1=0,
-                  comp2=1,
-                  show_contour=True,
-                  fig_size=(5, 5),
-                  fig_ncol=3,
-                  alpha=0.8,
-                  pad=1.08,
-                  w_pad=None,
-                  h_pad=None,
-                  save_fig=None,
-                  fig_path=None,
-                  fig_name='clone_scatter.pdf',
-                  **kwargs,
-                  ):
-    """ Scatter plot for clone clusters
+def _scatterplot2d_clone(adata,
+                         group,
+                         target='clone',
+                         obsm=None,
+                         layer=None,
+                         comp1=0,
+                         comp2=1,
+                         show_contour=True,
+                         fig_size=(5, 5),
+                         fig_ncol=3,
+                         alpha=0.8,
+                         pad=1.08,
+                         w_pad=None,
+                         h_pad=None,
+                         save_fig=None,
+                         fig_path=None,
+                         fig_name='clone_scatter.pdf',
+                         **kwargs,
+                         ):
+    """ Scatter plot for clone/clone_traj clusters
     """
     if fig_size is None:
         fig_size = mpl.rcParams['figure.figsize']
@@ -678,16 +679,16 @@ def clone_scatter(adata,
 
     n_components = 2
     df_X_clone = pd.DataFrame(index=adata.obs.index,
-                              data=adata.obsm['X_clone'].A,
-                              columns=adata.uns['clone']['anno'].index)
-    df_clones_clusters = adata.uns['clone']['anno'][group].copy()
+                              data=adata.obsm[f'X_{target}'].A,
+                              columns=adata.uns[target]['anno'].index)
+    df_clones_clusters = adata.uns[target]['anno'][group].copy()
     df_plot = pd.DataFrame(index=adata.obs.index,
                            data=mat_coord[:, :n_components],
                            columns=[f'Dim{comp1+1}', f'Dim{comp2+1}'])
     for x in np.unique(df_clones_clusters):
-        df_plot[f'clone_cluster_{x}'] = False
+        df_plot[f'{target}_cluster_{x}'] = False
         mask = (df_X_clone.loc[:, df_clones_clusters == x].sum(axis=1) > 0)
-        df_plot.loc[mask, f'clone_cluster_{x}'] = True
+        df_plot.loc[mask, f'{target}_cluster_{x}'] = True
 
     dict_palette = generate_palette(np.unique(df_clones_clusters))
     fig_nrow = int(np.ceil(len(np.unique(df_clones_clusters))/fig_ncol))
@@ -719,7 +720,7 @@ def clone_scatter(adata,
                         alpha=0.9,
                         color='black',
                         **kwargs)
-        ax_i.set_title(f'clone cluster {cl}')
+        ax_i.set_title(f'{target} cluster {cl}')
     plt.tight_layout(pad=pad, h_pad=h_pad, w_pad=w_pad)
     if(save_fig):
         if(not os.path.exists(fig_path)):
@@ -728,3 +729,85 @@ def clone_scatter(adata,
                     pad_inches=1,
                     bbox_inches='tight')
         plt.close(fig)
+
+
+def clone_scatter(adata,
+                  group,
+                  obsm=None,
+                  layer=None,
+                  comp1=0,
+                  comp2=1,
+                  show_contour=True,
+                  fig_size=(5, 5),
+                  fig_ncol=3,
+                  alpha=0.8,
+                  pad=1.08,
+                  w_pad=None,
+                  h_pad=None,
+                  save_fig=None,
+                  fig_path=None,
+                  fig_name='clone_scatter.pdf',
+                  **kwargs,
+                  ):
+    """ Scatter plot for clone clusters
+    """
+    _scatterplot2d_clone(adata,
+                         group,
+                         target='clone',
+                         obsm=obsm,
+                         layer=layer,
+                         comp1=comp1,
+                         comp2=comp2,
+                         show_contour=show_contour,
+                         fig_size=fig_size,
+                         fig_ncol=fig_ncol,
+                         alpha=alpha,
+                         pad=pad,
+                         w_pad=w_pad,
+                         h_pad=h_pad,
+                         save_fig=save_fig,
+                         fig_path=fig_path,
+                         fig_name=fig_name,
+                         **kwargs
+                         )
+
+
+def clone_traj_scatter(adata,
+                       group,
+                       obsm=None,
+                       layer=None,
+                       comp1=0,
+                       comp2=1,
+                       show_contour=True,
+                       fig_size=(5, 5),
+                       fig_ncol=3,
+                       alpha=0.8,
+                       pad=1.08,
+                       w_pad=None,
+                       h_pad=None,
+                       save_fig=None,
+                       fig_path=None,
+                       fig_name='clone_scatter.pdf',
+                       **kwargs,
+                       ):
+    """ Scatter plot for clone trajectory clusters
+    """
+    _scatterplot2d_clone(adata,
+                         group,
+                         target='clone_traj',
+                         obsm=obsm,
+                         layer=layer,
+                         comp1=comp1,
+                         comp2=comp2,
+                         show_contour=show_contour,
+                         fig_size=fig_size,
+                         fig_ncol=fig_ncol,
+                         alpha=alpha,
+                         pad=pad,
+                         w_pad=w_pad,
+                         h_pad=h_pad,
+                         save_fig=save_fig,
+                         fig_path=fig_path,
+                         fig_name=fig_name,
+                         **kwargs
+                         )

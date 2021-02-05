@@ -1,8 +1,14 @@
 """General preprocessing functions"""
 
 import numpy as np
+import pandas as pd
 from sklearn.utils import sparsefuncs
 from sklearn import preprocessing
+from scipy.sparse import (
+    issparse,
+    csr_matrix,
+)
+
 from ._utils import (
     cal_tf_idf
 )
@@ -63,3 +69,83 @@ def normalize(adata, method='lib_size', scale_factor=1e4, save_raw=True):
         adata.X = adata.X*scale_factor
     if(method == 'tf_idf'):
         adata.X = cal_tf_idf(adata.X)
+
+
+def add_clones(adata,
+               mat,
+               anno=None):
+    """Add clonal information into anndata object
+    Parameters
+    ----------
+    adata: `AnnData`
+        Annotated data matrix.
+    mat: `array_like`
+        A cells-by-clones relation matrix.
+    anno: `pd.DataFrame`, optional (default: None)
+        Annotation of clones.
+        If None, annotation dataframe will be auto-generated
+
+    Returns
+    -------
+    Updates `adata` with the following fields.
+    X_clone: `array_like` (`.obsm['X_clone']`)
+        Store #cells × #clones relation matrix.
+
+    Updates `adata.uns['clone']` with the following fields.
+    anno: `pd.DataFrame` (`.uns['clone']['anno']`)
+        Store annotation of clones
+    """
+
+    if not issparse(mat):
+        mat = csr_matrix(mat)
+    if anno is None:
+        anno = pd.DataFrame(
+            index=np.arange(mat.shape[1]).astype(str))
+    assert isinstance(anno, pd.DataFrame),\
+        "'anno' must be pd.DataFrame"
+    assert mat.shape[1] == anno.shape[0],\
+        "clone and its annotation must match"
+
+    adata.obsm['X_clone'] = mat.copy()
+    adata.uns['clone'] = dict()
+    adata.uns['clone']['anno'] = anno.copy()
+
+
+def add_clone_traj(adata,
+                   mat,
+                   anno=None):
+    """Add clonal trajectories into anndata object
+    Parameters
+    ----------
+    adata: `AnnData`
+        Annotated data matrix.
+    mat: `array_like`
+        A cells-by-clone_trajectories relation matrix.
+    anno: `pd.DataFrame`, optional (default: None)
+        Annotation of clone trajectories.
+        If None, annotation dataframe will be auto-generated
+
+    Returns
+    -------
+    Updates `adata` with the following fields.
+    X_clone_traj: `numpy.ndarray` (`.obsm['X_clone_traj']`)
+        Store #cells × #clones relation matrix.
+
+    Updates `adata.uns['clone_traj']` with the following fields.
+    anno: `pd.DataFrame` (`.uns['clone_traj']['anno']`)
+        Store annotation of clone trajectories
+    """
+
+    if not issparse(mat):
+        mat = csr_matrix(mat)
+    if anno is None:
+        anno = pd.DataFrame(
+            index=np.arange(mat.shape[1]).astype(str))
+    assert isinstance(anno, pd.DataFrame),\
+        "'anno' must be pd.DataFrame"
+    assert mat.shape[1] == anno.shape[0],\
+        "clone trajectory and its annotation must match"
+
+    adata.obsm['X_clone_traj'] = mat.copy()
+    adata.uns['clone_traj'] = dict()
+    adata.uns['clone_traj']['anno'] = anno.copy()

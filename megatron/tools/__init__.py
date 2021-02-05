@@ -1,9 +1,11 @@
 """The core functionality"""
 
-from ._clone_distance import (
-    clone_distance
+from ._distance import (
+    clone_distance,
+    clone_traj_distance
 )
 from ._general import (
-    cluster_clones
+    cluster_clones,
+    cluster_clone_traj,
 )
 from ._umap import umap

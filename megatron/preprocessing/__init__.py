@@ -3,7 +3,9 @@
 from ._general import (
     log_transform,
     normalize,
-    binarize
+    binarize,
+    add_clones,
+    add_clone_traj,
 )
 from ._qc import (
     cal_qc,
@@ -15,8 +17,8 @@ from ._qc import (
     filter_features,
     filter_genes,
     filter_peaks,
-    add_clones,
-    filter_clones
+    filter_clones,
+    filter_clone_traj
 )
 from ._pca import (
     pca,
