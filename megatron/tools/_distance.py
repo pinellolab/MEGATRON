@@ -33,7 +33,7 @@ def _dist(adata,
     else:
         mat_coord = adata.X
 
-    if 'time' in adata.obs_keys():
+    if anno_time in adata.obs_keys():
         df_time = adata.obs[anno_time].copy()
     else:
         raise ValueError(
