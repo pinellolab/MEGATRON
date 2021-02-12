@@ -14,7 +14,7 @@ from ._utils import reorder_list
 def _directed_graph(mat_clone,
                     mat_coord,
                     df_time,
-                    radius,
+                    radius=None,
                     min_cells=2,
                     eps=None
                     ):
@@ -49,6 +49,9 @@ def _directed_graph(mat_clone,
                              data=mat_clone.A)
     df_coord = pd.DataFrame(index=df_time.index,
                             data=mat_coord)
+    if radius is None:
+        radius = np.mean(df_coord.max(axis=0) - df_coord.min(axis=0))/5
+        print(f'Estimated radius is {radius}')
     G, df_nodes = _build_graph(df_clones,
                                df_coord,
                                df_time,
