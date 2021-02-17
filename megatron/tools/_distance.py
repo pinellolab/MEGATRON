@@ -3,6 +3,7 @@
 import time
 
 from ._directed_graph import _directed_graph
+from ._wasserstein import _wasserstein
 
 
 def _dist(adata,
@@ -48,6 +49,11 @@ def _dist(adata,
     elif method == 'mnn':
         pass
     elif method == 'wasserstein':
+        mat_dist = _wasserstein(mat_clone,
+                                mat_coord,
+                                df_time,
+                                **kwargs)
+    elif method == 'sinkhorn':
         pass
     else:
         raise ValueError(
