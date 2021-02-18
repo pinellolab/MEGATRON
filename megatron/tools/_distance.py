@@ -3,6 +3,9 @@
 import time
 
 from ._directed_graph import _directed_graph
+from ._wasserstein import _wasserstein
+from ._mnn import _mnn
+from ._sinkhorn import _sinkhorn
 
 
 def _dist(adata,
@@ -46,9 +49,20 @@ def _dist(adata,
                                    df_time,
                                    **kwargs)
     elif method == 'mnn':
-        pass
+        mat_dist = _mnn(mat_clone,
+                        mat_coord,
+                        df_time,
+                        **kwargs)
     elif method == 'wasserstein':
-        pass
+        mat_dist = _wasserstein(mat_clone,
+                                mat_coord,
+                                df_time,
+                                **kwargs)
+    elif method == 'sinkhorn':
+        mat_dist = _sinkhorn(mat_clone,
+                             mat_coord,
+                             df_time,
+                             **kwargs)
     else:
         raise ValueError(
             f'unrecognized method {method}')
