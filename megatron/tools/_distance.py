@@ -85,7 +85,7 @@ def _set_dist(adata,
     """
     assert (method in ['directed_graph', 'mnn', 'wasserstein', 'sinkhorn']),\
         f'unrecognized method {method}'
-    if method in adata.uns[target].keys():
+    if f'distance_{method}' in adata.uns[target].keys():
         adata.uns[target]['distance'] = \
             adata.uns[target][f'distance_{method}'].copy()
     else:
