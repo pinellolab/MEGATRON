@@ -4,6 +4,7 @@ import time
 
 from ._directed_graph import _directed_graph
 from ._wasserstein import _wasserstein
+from ._mnn import _mnn
 
 
 def _dist(adata,
@@ -47,7 +48,10 @@ def _dist(adata,
                                    df_time,
                                    **kwargs)
     elif method == 'mnn':
-        pass
+        mat_dist = _mnn(mat_clone,
+                        mat_coord,
+                        df_time,
+                        **kwargs)
     elif method == 'wasserstein':
         mat_dist = _wasserstein(mat_clone,
                                 mat_coord,
