@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import wasserstein_distance, energy_distance
+from scipy.spatial.distance import squareform
 
 def _wasserstein(mat_clone,
                  mat_coord,
