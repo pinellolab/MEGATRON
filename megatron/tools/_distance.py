@@ -5,7 +5,6 @@ import time
 from ._directed_graph import _directed_graph
 from ._wasserstein import _wasserstein
 from ._mnn import _mnn
-from ._sinkhorn import _sinkhorn
 
 
 def _dist(adata,
@@ -59,6 +58,15 @@ def _dist(adata,
                                 df_time,
                                 **kwargs)
     elif method == 'sinkhorn':
+        try:
+            import geomloss
+        except ModuleNotFoundError:
+            print("Please install 'geomloss'!")
+        try:
+            import torch
+        except ModuleNotFoundError:
+            print("Please install 'torch'!")
+        from ._sinkhorn import _sinkhorn
         mat_dist = _sinkhorn(mat_clone,
                              mat_coord,
                              df_time,
