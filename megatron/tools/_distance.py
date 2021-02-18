@@ -66,7 +66,23 @@ def _dist(adata,
     else:
         raise ValueError(
             f'unrecognized method {method}')
+    adata.uns[target][f'distance_{method}'] = mat_dist
     adata.uns[target]['distance'] = mat_dist
+
+
+def _set_dist(adata,
+              target='clone',
+              method='directed_graph'):
+    """Choose from calculated distance and set it to the current distance
+    """
+    assert (method in ['directed_graph', 'mnn', 'wasserstein', 'sinkhorn']),\
+        f'unrecognized method {method}'
+    if method in adata.uns[target].keys():
+        adata.uns[target]['distance'] = \
+            adata.uns[target][f'distance_{method}'].copy()
+    else:
+        raise ValueError(
+            f'"{method}" has not been used yet')
 
 
 def clone_distance(adata,
@@ -165,3 +181,61 @@ def clone_traj_distance(adata,
           **kwargs)
     ed = time.time()
     print(f'Finished: {(ed-st)/60} mins')
+
+
+def set_clone_distance(adata,
+                       method='directed_graph'):
+    """Set the current distance matrix to the one calculated
+    by the specified method
+
+    Parameters
+    ----------
+    adata: `AnnData`
+        Anndata object.
+    method: `str`, (default: 'directed_graph');
+        Method used to calculate clonal distances.
+        Possible methods:
+        - 'directed_graph': shortest-path-based directed graph
+        - 'mnn':
+        - 'wasserstein'
+
+    Returns
+    -------
+    updates `adata.uns['clone_traj']` with the following field.
+    distance: `sparse matrix`` (`.uns['clone_traj']['distance']`)
+        A condensed clone distance matrix.
+        It can be converted into a redundant square matrix using `squareform`
+        from Scipy.
+    """
+    _set_dist(adata,
+              target='clone',
+              method=method)
+
+
+def set_clone_traj_distance(adata,
+                            method='directed_graph'):
+    """Set the current distance matrix to the one calculated
+    by the specified method
+
+    Parameters
+    ----------
+    adata: `AnnData`
+        Anndata object.
+    method: `str`, (default: 'directed_graph');
+        Method used to calculate clonal distances.
+        Possible methods:
+        - 'directed_graph': shortest-path-based directed graph
+        - 'mnn':
+        - 'wasserstein'
+
+    Returns
+    -------
+    updates `adata.uns['clone_traj']` with the following field.
+    distance: `sparse matrix`` (`.uns['clone_traj']['distance']`)
+        A condensed clone distance matrix.
+        It can be converted into a redundant square matrix using `squareform`
+        from Scipy.
+    """
+    _set_dist(adata,
+              target='clone_traj',
+              method=method)
