@@ -1,6 +1,8 @@
 """Functions to calculate the distances between clones"""
 
 import time
+import anndata as ad
+import pandas as pd
 
 from ._directed_graph import _directed_graph
 from ._wasserstein import _wasserstein
@@ -42,10 +44,14 @@ def _dist(adata,
             f'could not find {anno_time} in `adata.obs_keys()`')
     mat_clone = adata.obsm[f'X_{target}']
 
+    ad_input = ad.AnnData(X=mat_clone.copy(),
+                          obs=pd.DataFrame(df_time.copy()),
+                          var=pd.DataFrame(adata.uns['clone']['anno'].copy()))
+    ad_input.obsm['X_coord'] = mat_coord.copy()
+    ad_input.uns['params'] = {'anno_time': anno_time}
+
     if method == 'directed_graph':
-        mat_dist = _directed_graph(mat_clone,
-                                   mat_coord,
-                                   df_time,
+        mat_dist = _directed_graph(ad_input,
                                    **kwargs)
     elif method == 'mnn':
         mat_dist = _mnn(mat_clone,
