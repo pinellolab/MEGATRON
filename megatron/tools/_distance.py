@@ -4,7 +4,7 @@ import time
 import anndata as ad
 import pandas as pd
 
-from ._directed_graph import _directed_graph
+from ._graph import _graph_distance
 from ._wasserstein import _wasserstein
 from ._mnn import _mnn
 
@@ -51,7 +51,7 @@ def _dist(adata,
     ad_input.uns['params'] = {'anno_time': anno_time}
 
     if method == 'directed_graph':
-        mat_dist = _directed_graph(ad_input,
+        mat_dist = _graph_distance(ad_input,
                                    **kwargs)
     elif method == 'mnn':
         mat_dist = _mnn(mat_clone,
