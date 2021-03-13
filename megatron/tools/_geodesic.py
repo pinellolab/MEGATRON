@@ -11,11 +11,11 @@ from scipy.spatial.distance import pdist, squareform
 from ._utils import sort_list
 
 
-def _graph_distance(ad_input,
-                    k=3,
-                    metric='euclidean',
-                    ):
-    """Shortest-path-based graph
+def _average_geodesic(ad_input,
+                      k=3,
+                      metric='euclidean',
+                      ):
+    """average geodesic distances between each pair of clones
 
     Parameters
     ----------
