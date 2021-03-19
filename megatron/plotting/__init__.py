@@ -10,3 +10,7 @@ from ._plot import (
     clone_scatter,
     clone_traj_scatter,
 )
+
+from ._interactive import (
+    full_viz
+)
