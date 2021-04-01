@@ -3,6 +3,7 @@
 import numpy as np
 import itertools
 import networkx as nx
+import multiprocessing
 from sklearn.neighbors import NearestNeighbors
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import pdist, cdist, squareform
@@ -120,10 +121,72 @@ def _build_graph(ad_input,
     return G
 
 
+def _cal_geodesic_dist(ad_input,
+                       G,
+                       k,
+                       metric,
+                       mat_clone,
+                       mat_coord,
+                       mat_time,
+                       i,
+                       j):
+    ind_i = mat_clone[:, i].nonzero()[0]
+    ind_j = mat_clone[:, j].nonzero()[0]
+    mat_coord_i = mat_coord[ind_i, ]
+    mat_coord_j = mat_coord[ind_j, ]
+    mat_time_i = mat_time[ind_i]
+    mat_time_j = mat_time[ind_j]
+
+    # mutual nearest neighbors
+    k_ = min(k, len(ind_i), len(ind_j))
+    mat_dist_ij = cdist(mat_coord_i, mat_coord_j, metric=metric)
+    mat_knn_i = np.zeros(shape=mat_dist_ij.shape)
+    mat_knn_j = np.zeros(shape=mat_dist_ij.shape)
+    mat_knn_i[np.tile(np.arange(mat_dist_ij.shape[0]).reshape(-1, 1), (1, k_)),
+              np.argsort(mat_dist_ij, axis=1)[:, :k_]] = 1
+    mat_knn_j[np.argsort(mat_dist_ij, axis=0)[:k_, :],
+              np.tile(np.arange(mat_dist_ij.shape[1]), (k_, 1))] = 1
+
+    # mutual nearest times
+    mat_time_dist_ij = cdist(mat_time_i.reshape(-1, 1),
+                             mat_time_j.reshape(-1, 1),
+                             metric='cityblock')
+    min_time_dist = mat_time_dist_ij.min()
+    mat_time_nn = np.where(mat_time_dist_ij == min_time_dist, 1, 0)
+
+    # keep edges that satisfy both mnn and mnt
+    mat_sum = mat_knn_i + mat_knn_j + mat_time_nn
+    max_sum = mat_sum.max()
+    ids_i, ids_j = np.where(mat_sum == max_sum)
+
+    # connect graph i and graph j
+    cells_i = ad_input.obs_names[ind_i]
+    cells_j = ad_input.obs_names[ind_j]
+    G_ij = G.subgraph(cells_i.tolist() + cells_j.tolist()).copy()
+    G_ij.add_weighted_edges_from(zip(cells_i[ids_i],
+                                     cells_j[ids_j],
+                                     mat_dist_ij[ids_i, ids_j]),
+                                 weight='dist')
+
+    # calculate average shortest paths for mutual-nearest-times nodes
+    ids_ii, ids_jj = np.where(mat_time_nn == 1)
+    mat_time_nn_len = np.zeros(mat_time_nn.shape)
+    mat_time_nn_len.fill(np.nan)
+    for ii, jj in zip(ids_ii, ids_jj):
+        mat_time_nn_len[ii, jj] = nx.shortest_path_length(G_ij,
+                                                          source=cells_i[ii],
+                                                          target=cells_j[jj],
+                                                          weight='dist')
+    dist = np.mean([np.nanmin(mat_time_nn_len, axis=1).mean(),
+                    np.nanmin(mat_time_nn_len, axis=0).mean()])
+    return dist
+
+
 def _pairwise_geodesic_dist(ad_input,
                             G,
                             metric='euclidean',
-                            k=3):
+                            k=3,
+                            n_jobs=1):
     """calculate geodesic distance between each pair of clones
     Parameters
     ----------
@@ -140,60 +203,9 @@ def _pairwise_geodesic_dist(ad_input,
     dict_time = {x: i for i, x in enumerate(time_sorted)}
     mat_time = np.array([dict_time[x] for x in df_time.values])
 
-    list_dist = []
-
-    for i, j in list(itertools.combinations(np.arange(ad_input.shape[1]), 2)):
-        ind_i = mat_clone[:, i].nonzero()[0]
-        ind_j = mat_clone[:, j].nonzero()[0]
-        mat_coord_i = mat_coord[ind_i, ]
-        mat_coord_j = mat_coord[ind_j, ]
-        mat_time_i = mat_time[ind_i]
-        mat_time_j = mat_time[ind_j]
-
-        # mutual nearest neighbors
-        k_ = min(k, len(ind_i), len(ind_j))
-        mat_dist_ij = cdist(mat_coord_i,
-                            mat_coord_j,
-                            metric=metric)
-        mat_knn_i = np.zeros(shape=mat_dist_ij.shape)
-        mat_knn_j = np.zeros(shape=mat_dist_ij.shape)
-        mat_knn_i[np.tile(np.arange(mat_dist_ij.shape[0]).reshape(-1, 1),
-                          (1, k_)),
-                  np.argsort(mat_dist_ij, axis=1)[:, :k_]] = 1
-        mat_knn_j[np.argsort(mat_dist_ij, axis=0)[:k_, :],
-                  np.tile(np.arange(mat_dist_ij.shape[1]),
-                          (k_, 1))] = 1
-
-        # mutual nearest times
-        mat_time_dist_ij = cdist(mat_time_i.reshape(-1, 1),
-                                 mat_time_j.reshape(-1, 1),
-                                 metric='cityblock')
-        min_time_dist = mat_time_dist_ij.min()
-        mat_time_nn = np.where(mat_time_dist_ij == min_time_dist, 1, 0)
-
-        # keep edges that satisfy both mnn and mnt
-        mat_sum = mat_knn_i + mat_knn_j + mat_time_nn
-        max_sum = mat_sum.max()
-        ids_i, ids_j = np.where(mat_sum == max_sum)
-
-        # connect graph i and graph j
-        cells_i = ad_input.obs_names[ind_i]
-        cells_j = ad_input.obs_names[ind_j]
-        G_ij = G.subgraph(cells_i.tolist() + cells_j.tolist()).copy()
-        G_ij.add_weighted_edges_from(
-            zip(cells_i[ids_i], cells_j[ids_j], mat_dist_ij[ids_i, ids_j]),
-            weight='dist')
-
-        # calculate average shortest paths for mutual-nearest-times nodes
-        ids_ii, ids_jj = np.where(mat_time_nn == 1)
-        mat_time_nn_len = np.zeros(mat_time_nn.shape)
-        mat_time_nn_len.fill(np.nan)
-        for ii, jj in zip(ids_ii, ids_jj):
-            mat_time_nn_len[ii, jj] = \
-                nx.shortest_path_length(G_ij,
-                                        source=cells_i[ii],
-                                        target=cells_j[jj],
-                                        weight='dist')
-        list_dist.append(np.mean(
-            [np.nanmin(mat_time_nn_len, axis=1).mean(),
-             np.nanmin(mat_time_nn_len, axis=0).mean()]))
+    list_ij = list(itertools.combinations(np.arange(ad_input.shape[1]), 2))
+    list_param = [(ad_input, G, k, metric, mat_clone, mat_coord, mat_time,
+                   i, j) for i, j in list_ij]
+    with multiprocessing.Pool(processes=n_jobs) as pool:
+        list_dist = pool.starmap(_cal_geodesic_dist, list_param)
+    return list_dist
