@@ -2,6 +2,7 @@
 
 import numpy as np
 import itertools
+import collections
 import networkx as nx
 import multiprocessing
 from sklearn.neighbors import NearestNeighbors
@@ -15,6 +16,8 @@ def _average_geodesic(ad_input,
                       k=3,
                       metric='euclidean',
                       n_jobs=1,
+                      use_weight=False,
+                      weight_time=None,
                       ):
     """average geodesic distances between each pair of clones
 
@@ -43,6 +46,14 @@ def _average_geodesic(ad_input,
         from Scipy.
     """
 
+    if use_weight:
+        if weight_time is not None:
+            assert isinstance(weight_time, dict), "`weight_time` must be dict"
+            anno_time = ad_input.uns['params']['anno_time']
+            if not (set(ad_input.obs[anno_time]) == set(weight_time.keys())):
+                raise ValueError("keys in `weight_time` "
+                                 "do not match time annotation")
+
     G = _build_graph(ad_input,
                      k=k,
                      metric=metric)
@@ -50,7 +61,9 @@ def _average_geodesic(ad_input,
                                         G,
                                         k=k,
                                         metric=metric,
-                                        n_jobs=n_jobs)
+                                        n_jobs=n_jobs,
+                                        use_weight=use_weight,
+                                        weight_time=weight_time)
     return list_dist
 
 
@@ -130,6 +143,8 @@ def _cal_geodesic_dist(ad_input,
                        mat_clone,
                        mat_coord,
                        mat_time,
+                       use_weight,
+                       mat_time_w,
                        i,
                        j):
     ind_i = mat_clone[:, i].nonzero()[0]
@@ -138,6 +153,8 @@ def _cal_geodesic_dist(ad_input,
     mat_coord_j = mat_coord[ind_j, ]
     mat_time_i = mat_time[ind_i]
     mat_time_j = mat_time[ind_j]
+    mat_time_w_i = mat_time_w[ind_i]
+    mat_time_w_j = mat_time_w[ind_j]
 
     # mutual nearest neighbors
     k_ = min(k, len(ind_i), len(ind_j))
@@ -174,13 +191,21 @@ def _cal_geodesic_dist(ad_input,
     ids_ii, ids_jj = np.where(mat_time_nn == 1)
     mat_time_nn_len = np.zeros(mat_time_nn.shape)
     mat_time_nn_len.fill(np.nan)
+
+    # unique combinations of nearest timepoints
+    # compute the average distance of each mutual nearest timepoint
+    dict_freq_ij = \
+        collections.Counter(mat_time_i[ids_ii] + mat_time_j[ids_jj])
     for ii, jj in zip(ids_ii, ids_jj):
         mat_time_nn_len[ii, jj] = nx.shortest_path_length(G_ij,
                                                           source=cells_i[ii],
                                                           target=cells_j[jj],
                                                           weight='dist')
-    dist = np.mean([np.nanmin(mat_time_nn_len, axis=1).mean(),
-                    np.nanmin(mat_time_nn_len, axis=0).mean()])
+        mat_time_nn_len[ii, jj] *= \
+            1/dict_freq_ij[mat_time_i[ii] + mat_time_j[jj]]
+        if use_weight:
+            mat_time_nn_len[ii, jj] *= max(mat_time_w_i[ii], mat_time_w_j[jj])
+    dist = np.sum(mat_time_nn_len[ids_ii, ids_jj])/len(dict_freq_ij)
     return dist
 
 
@@ -188,6 +213,8 @@ def _pairwise_geodesic_dist(ad_input,
                             G,
                             metric='euclidean',
                             k=3,
+                            use_weight=False,
+                            weight_time=None,
                             n_jobs=1):
     """calculate geodesic distance between each pair of clones
     Parameters
@@ -204,9 +231,17 @@ def _pairwise_geodesic_dist(ad_input,
     time_sorted = np.unique(ad_input.obs[anno_time])
     dict_time = {x: i for i, x in enumerate(time_sorted)}
     mat_time = np.array([dict_time[x] for x in df_time.values])
-
+    if use_weight:
+        if weight_time is None:
+            mat_time_w = mat_time.copy()
+            mat_time_w = (mat_time_w+1)/(max(mat_time_w)+1)
+        else:
+            mat_time_w = np.array([weight_time[x] for x in df_time.values])
+    else:
+        mat_time_w = np.ones(mat_time.shape)
     list_ij = list(itertools.combinations(np.arange(ad_input.shape[1]), 2))
-    list_param = [(ad_input, G, k, metric, mat_clone, mat_coord, mat_time,
+    list_param = [(ad_input, G, k, metric, mat_clone, mat_coord,
+                   mat_time, use_weight, mat_time_w,
                    i, j) for i, j in list_ij]
     with multiprocessing.Pool(processes=n_jobs) as pool:
         list_dist = pool.starmap(_cal_geodesic_dist, list_param)
