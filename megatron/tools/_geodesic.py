@@ -14,6 +14,7 @@ from ._utils import sort_list
 def _average_geodesic(ad_input,
                       k=3,
                       metric='euclidean',
+                      n_jobs=1,
                       ):
     """average geodesic distances between each pair of clones
 
@@ -36,7 +37,7 @@ def _average_geodesic(ad_input,
 
     Returns
     -------
-    mat_dist: `array-like`
+    list_dist: `array-like`
         A condensed clone distance matrix.
         It can be converted into a redundant square matrix using `squareform`
         from Scipy.
@@ -45,10 +46,11 @@ def _average_geodesic(ad_input,
     G = _build_graph(ad_input,
                      k=k,
                      metric=metric)
-    list_dist = _average_geodesic(ad_input,
-                                  G,
-                                  k=k,
-                                  metric=metric)
+    list_dist = _pairwise_geodesic_dist(ad_input,
+                                        G,
+                                        k=k,
+                                        metric=metric,
+                                        n_jobs=n_jobs)
     return list_dist
 
 
