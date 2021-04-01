@@ -83,7 +83,7 @@ def _build_graph(ad_input,
                 mat_dis_i_t = ad_input_i[cells_i_t, ].obsp['dist']
                 nbrs = NearestNeighbors(n_neighbors=k_,
                                         metric='precomputed').fit(mat_dis_i_t)
-                mat_knn = nbrs.kneighbors_graph(mode='distance')
+                mat_knn = nbrs.kneighbors_graph(mat_dis_i_t, mode='distance')
                 G_i_t = nx.from_scipy_sparse_matrix(mat_knn,
                                                     edge_attribute='dist')
                 mapping = dict(zip(np.arange(len(cells_i_t)), cells_i_t))
@@ -104,7 +104,7 @@ def _build_graph(ad_input,
             mat_dis_i_t = ad_input_i[cells_i_t, ].obsp['dist']
             nbrs = NearestNeighbors(n_neighbors=k_,
                                     metric='precomputed').fit(mat_dis_i_t)
-            mat_knn = nbrs.kneighbors_graph(mode='distance')
+            mat_knn = nbrs.kneighbors_graph(mat_dis_i_t, mode='distance')
             G_i_t = nx.from_scipy_sparse_matrix(mat_knn,
                                                 edge_attribute='dist')
             mapping = dict(zip(np.arange(len(cells_i_t)), cells_i_t))
