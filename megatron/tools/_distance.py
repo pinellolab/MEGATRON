@@ -57,6 +57,16 @@ def _dist(adata,
                                 mat_coord,
                                 df_time,
                                 **kwargs)
+    elif method == 'wasserstein_parallel':
+        try:
+            import multiprocessing
+        except ModuleNotFoundError:
+            print("Please install 'multiprocessing'!")
+        from ._wasserstein import _wasserstein_parallel
+        mat_dist = _wasserstein_parallel(mat_clone,
+                                mat_coord,
+                                df_time,
+                                **kwargs)
     elif method == 'sinkhorn':
         try:
             import geomloss
