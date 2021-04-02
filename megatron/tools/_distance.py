@@ -52,6 +52,16 @@ def _dist(adata,
                         mat_coord,
                         df_time,
                         **kwargs)
+    elif method == 'mnn_parallel':
+        try:
+            import multiprocessing
+        except ModuleNotFoundError:
+            print("Please install 'multiprocessing'!")
+        from ._mnn_parallel import _mnn_parallel
+        mat_dist = _mnn_parallel(mat_clone,
+                                mat_coord,
+                                df_time,
+                                **kwargs)
     elif method == 'wasserstein':
         mat_dist = _wasserstein(mat_clone,
                                 mat_coord,
@@ -62,7 +72,7 @@ def _dist(adata,
             import multiprocessing
         except ModuleNotFoundError:
             print("Please install 'multiprocessing'!")
-        from ._wasserstein import _wasserstein_parallel
+        from ._wasserstein_parallel import _wasserstein_parallel
         mat_dist = _wasserstein_parallel(mat_clone,
                                 mat_coord,
                                 df_time,
