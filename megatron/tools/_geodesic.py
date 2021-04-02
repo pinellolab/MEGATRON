@@ -165,6 +165,9 @@ def _cal_geodesic_dist(ad_input,
               np.argsort(mat_dist_ij, axis=1)[:, :k_]] = 1
     mat_knn_j[np.argsort(mat_dist_ij, axis=0)[:k_, :],
               np.tile(np.arange(mat_dist_ij.shape[1]), (k_, 1))] = 1
+    mat_mnn = mat_knn_i + mat_knn_j
+    max_mnn = mat_mnn.max()
+    mat_mnn = np.where(mat_mnn == max_mnn, 1, 0)
 
     # mutual nearest times
     mat_time_dist_ij = cdist(mat_time_i.reshape(-1, 1),
@@ -174,6 +177,10 @@ def _cal_geodesic_dist(ad_input,
     mat_time_nn = np.where(mat_time_dist_ij == min_time_dist, 1, 0)
 
     # keep edges that satisfy both mnn and mnt
+    mat_sum = mat_mnn + mat_time_nn
+    max_sum = mat_sum.max()
+    ids_i, ids_j = np.where(mat_sum == max_sum)
+
     mat_sum = mat_knn_i + mat_knn_j + mat_time_nn
     max_sum = mat_sum.max()
     ids_i, ids_j = np.where(mat_sum == max_sum)

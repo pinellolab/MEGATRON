@@ -1,21 +1,22 @@
 """General-purpose tools"""
 
-from scipy.cluster.hierarchy import (
-    dendrogram, linkage, fcluster)
+from scipy.cluster.hierarchy import linkage as scipy_linkage
+from scipy.cluster.hierarchy import fcluster
 
 
 def _cluster(adata,
              n_clusters,
              target='clone',
              method='hierarchical',
+             linkage='ward',
              **kwargs):
     """Cluster clones or clone trajectories
     """
     list_dist = adata.uns[target]['distance']
     if method == 'hierarchical':
-        Z = linkage(list_dist,
-                    'ward',
-                    **kwargs)
+        Z = scipy_linkage(list_dist,
+                          method=linkage,
+                          **kwargs)
         clusters = fcluster(Z,
                             n_clusters,
                             criterion='maxclust',
@@ -29,6 +30,7 @@ def _cluster(adata,
 def cluster_clones(adata,
                    n_clusters=2,
                    method='hierarchical',
+                   linkage='ward',
                    **kwargs):
     """Cluster clones
 
@@ -40,6 +42,7 @@ def cluster_clones(adata,
     _cluster(adata,
              n_clusters=n_clusters,
              method=method,
+             linkage=linkage,
              target='clone',
              **kwargs)
 
@@ -47,6 +50,7 @@ def cluster_clones(adata,
 def cluster_clone_traj(adata,
                        n_clusters=2,
                        method='hierarchical',
+                       linkage='ward',
                        **kwargs):
     """Cluster clone paths
 
@@ -59,5 +63,6 @@ def cluster_clone_traj(adata,
     _cluster(adata,
              n_clusters=n_clusters,
              method=method,
+             linkage=linkage,
              target='clone_traj',
              **kwargs)
