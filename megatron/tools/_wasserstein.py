@@ -51,4 +51,5 @@ def _wasserstein(mat_clone,
                 num_noninform += 1
             distance_matrix[i][j] = dist
     #print("Out of " + str(math.comb(num_clones, 2)) + " clonal distances, " + str(num_noninform) + " are noninformative")
+    #print(squareform(distance_matrix + distance_matrix.transpose()))
     return squareform(distance_matrix + distance_matrix.transpose())
