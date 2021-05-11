@@ -71,7 +71,7 @@ def _mnn_parallel(mat_clone,
     results_unordered = pool.map(calc_dist, j_params)
     pool.close()
     pool.join()
-    print("All jobs complete"")
+    print("All jobs complete")
     results_ordered = [0]*len(results_unordered)
     for idx in mappingdict:
         results_ordered[idx] = results_unordered[int(mappingdict[idx])]
