@@ -19,15 +19,19 @@ def _mnn_parallel(mat_clone,
     num_noninform = 0
 
     global rng
+    print("Global neighbors graph variable instantiated")
     if dist=="kneighbors":
         rng = kneighbors_graph(mat_coord, neighbors, mode=mode, include_self=True)
+        print("k-neighbors graph created")
     else:
         rng = radius_neighbors_graph(mat_coord, radius=radius, mode=mode, include_self=True)
+        print("Radius neighbors graph created")
 
     nz = rng.nonzero()
     coords = np.stack((nz[0],nz[1]),axis=-1)
     # for O(1) lookup times
     rng = rng.todok()
+    print("Graph converted to DOK format")
 
     j_params = []
     mapping = []
@@ -63,9 +67,11 @@ def _mnn_parallel(mat_clone,
     mapping = mapping - 1
     mappingdict = dict(enumerate(mapping))
     pool = multiprocessing.Pool(processes=n_jobs)
+    print("Pool of jobs created")
     results_unordered = pool.map(calc_dist, j_params)
     pool.close()
     pool.join()
+    print("All jobs complete"")
     results_ordered = [0]*len(results_unordered)
     for idx in mappingdict:
         results_ordered[idx] = results_unordered[int(mappingdict[idx])]

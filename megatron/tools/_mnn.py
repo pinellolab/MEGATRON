@@ -10,34 +10,40 @@ def _mnn(mat_clone,
          neighbors=5,
          mode="distance"):
     time_steps = np.unique(df_time)
+    print("%s time points" % time_steps)
     num_clones = mat_clone.shape[1]
     num_dim = mat_coord.shape[1]
-    distance_matrix = np.zeros((num_clones, num_clones))
     num_noninform = 0
 
     if dist=="kneighbors":
         rng = kneighbors_graph(mat_coord, neighbors, mode=mode, include_self=True)
+        print("K-neighbors graph created")
     else:
         rng = radius_neighbors_graph(mat_coord, radius=radius, mode=mode, include_self=True)
+        print("Radius neighbors graph created")
 
     nz = rng.nonzero()
     coords = np.stack((nz[0],nz[1]),axis=-1)
     # for O(1) lookup times
     rng = rng.todok()
+    print("Graph converted to DOK format")
 
+    distance_matrix = np.zeros((num_clones, num_clones))
     for i in range(num_clones):
+
+        print("...analyzing %s clone" % i)
         # get the coords for all cells in i
         cells_in_i = mat_clone[:,i].nonzero()[0]
         coords_for_i = mat_coord[cells_in_i]
         time_for_i = df_time[cells_in_i]
 
         ts_i_dict = {}
-
         for t in time_steps:
             ts_i = cells_in_i[np.where(time_for_i == t)[0]]
             ts_i_neighbors = coords[(np.isin(coords, ts_i)[:,0] == True)]
             total_all_ts_i_neighbors = rng[ts_i_neighbors[:,0],ts_i_neighbors[:,1]].sum()
             ts_i_dict[t] = [ts_i_neighbors, total_all_ts_i_neighbors]
+        print(".....analyzed %s clone's neighbors" % i)
 
         for j in range(i):
             dist = 0
@@ -46,6 +52,7 @@ def _mnn(mat_clone,
             cells_in_j = mat_clone[:,j].nonzero()[0]
             coords_for_j = mat_coord[cells_in_j]
             time_for_j = df_time[cells_in_j]
+            print(".....analyzed %s/%s clone's neighbors" % (i,j))
 
             ts_dists = []
             for t in time_steps:
@@ -73,5 +80,7 @@ def _mnn(mat_clone,
 
                 ts_dists.append(ts_i_frac)
                 ts_dists.append(ts_j_frac)
+            print(".....analyzed %s/%s neighborhood across time" % (i,j))
             distance_matrix[i][j] += np.mean(ts_dists)
+            print(".....got mean")
     return squareform(distance_matrix + distance_matrix.transpose())
