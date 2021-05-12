@@ -18,7 +18,7 @@ def _mnn_parallel(mat_clone,
     distance_matrix = np.zeros((num_clones, num_clones))
     num_noninform = 0
 
-    global rng
+    #global rng
     print("Global neighbors graph variable instantiated")
     if dist=="kneighbors":
         rng = kneighbors_graph(mat_coord, neighbors, mode=mode, include_self=True)
@@ -56,7 +56,7 @@ def _mnn_parallel(mat_clone,
             cells_in_j = mat_clone[:,j].nonzero()[0]
             coords_for_j = mat_coord[cells_in_j]
             time_for_j = df_time[cells_in_j]
-            params = [time_steps, ts_i_dict, cells_in_j, coords, time_for_j, cells_in_i]
+            params = [time_steps, ts_i_dict, cells_in_j, coords, time_for_j, cells_in_i, rng]
             mappingcol.append(mappingctr)
             mappingctr += 1
             j_params.append(params)
@@ -78,7 +78,7 @@ def _mnn_parallel(mat_clone,
     return results_ordered
 
 def calc_dist(params):
-    time_steps, ts_i_dict, cells_in_j, coords, time_for_j, cells_in_i = params
+    time_steps, ts_i_dict, cells_in_j, coords, time_for_j, cells_in_i, rng = params
     ts_dists = []
     for t in time_steps:
         ts_i_neighbors, total_all_ts_i_neighbors = ts_i_dict[t]
