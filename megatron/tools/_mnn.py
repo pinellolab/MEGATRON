@@ -4,12 +4,9 @@ from sklearn.neighbors import radius_neighbors_graph, kneighbors_graph
 # from scipy.spatial.distance import squareform
 import multiprocessing
 
-from scipy.sparse import vstack
 import warnings
 import pandas as pd
-
-# import sys
-# np.seterr(all='warning')
+import sys
 
 
 def _mnn(
@@ -28,11 +25,11 @@ def _mnn(
     time_steps = np.unique(df_time)
     num_clones = mat_clone.shape[1]
 
-    #global rng
-    #print("Global neighbors graph variable instantiated")
-
     if dist == "kneighbors":
-        rng = kneighbors_graph(mat_coord, neighbors, mode=mode, include_self=True)
+        rng = kneighbors_graph(mat_coord,
+                               neighbors,
+                               mode=mode,
+                               include_self=True)
         print("k-neighbors graph created")
     else:
         rng = radius_neighbors_graph(
@@ -71,7 +68,15 @@ def _mnn(
             cells_in_j = mat_clone[:, j].nonzero()[0]
             # coords_for_j = mat_coord[cells_in_j]
             time_for_j = df_time[cells_in_j]
-            params = [time_steps, ts_i_dict, cells_in_j, coords, time_for_j, cells_in_i, rng]
+            params = [
+                time_steps,
+                ts_i_dict,
+                cells_in_j,
+                coords,
+                time_for_j,
+                cells_in_i,
+                rng,
+            ]
             mappingcol.append(mappingctr)
             mappingctr += 1
             j_params.append(params)
@@ -91,7 +96,6 @@ def _mnn(
     try:
         results_unordered = pool.map(calc_dist, j_params)
     except Exception:
-        print("STOP")
         sys.exit(2)
     pool.close()
     pool.join()
@@ -103,14 +107,17 @@ def _mnn(
 
 
 def calc_dist(params):
-    time_steps, ts_i_dict, cells_in_j, coords, time_for_j, cells_in_i, rng = params
+    time_steps, ts_i_dict, cells_in_j, \
+        coords, time_for_j, cells_in_i, rng = params
     ts_dists = []
     g = 0
     for t in time_steps:
         ts_i_neighbors, total_all_ts_i_neighbors = ts_i_dict[t]
         ts_j = cells_in_j[np.where(time_for_j == t)[0]]
         ts_j_neighbors = coords[(np.isin(coords, ts_j)[:, 0] == True)]
-        total_all_ts_j_neighbors = rng[ts_j_neighbors[:, 0], ts_j_neighbors[:, 1]].sum()
+        total_all_ts_j_neighbors = rng[
+            ts_j_neighbors[:, 0], ts_j_neighbors[:, 1]
+        ].sum()
 
         ts_i_neighbors_in_j = ts_i_neighbors[
             (np.isin(ts_i_neighbors, cells_in_j)[:, 1] == True)
