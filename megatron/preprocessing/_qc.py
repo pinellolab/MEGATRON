@@ -784,3 +784,51 @@ def filter_clone_traj(adata,
     print(f'After filtering: {X_clone_traj_filtered.shape[1]} clone paths')
     adata.obsm['X_clone_traj'] = X_clone_traj_filtered
     adata.uns['clone_traj']['anno'] = anno_clone_traj_filtered
+
+def filter_clone_time(adata,
+                      anno_time='time',
+                      skip_tolerance=0):
+    """Filter clone paths based on the number of timepoints represented
+
+    Parameters
+    ----------
+    adata: `AnnData`
+        Annotated data matrix.
+    anno_time: `time`
+        Where the timestep data is stored
+    skip_tolerance: `int` (default: 0)
+        The maximium number of timepoints each clone is allowed to
+        have NOT represented in them.
+
+    Returns
+    -------
+    Updates `adata` with the following fields.
+    X_clone_traj: `numpy.ndarray` (`.obsm['X_clone_traj']`)
+        A relation matrix of #cells × #clone_traj.
+
+    Updates `adata.uns['clone_traj']` with the following fields.
+    anno: `pd.DataFrame` (`.uns['clone_traj']['anno']`)
+        The annotation of clone trajectories
+    """
+    if anno_time in adata.obs_keys():
+        df_time = adata.obs[anno_time].copy()
+    else:
+        raise ValueError(
+            f'could not find {anno_time} in `adata.obs_keys()`')
+
+    time_steps = np.unique(df_time).shape[0]
+    X_clone = adata.obsm['X_clone']
+    num_clones = X_clone.shape[1]
+    print(f'Before filtering: {num_clones} clones')
+
+    mask_keep = np.empty(num_clones, dtype=bool)
+    for i in range(num_clones):
+        mask_keep[i] = (time_steps - len(df_time[X_clone[:,i].nonzero()[0]].unique())) <= skip_tolerance
+    X_clone_filtered = X_clone[:, mask_keep].copy()
+
+    anno_clone = adata.uns['clone']['anno']
+    anno_clone_filtered = anno_clone.loc[mask_keep, ].copy()
+
+    print(f'After filtering: {X_clone_filtered.shape[1]} clones')
+    adata.obsm['X_clone'] = X_clone_filtered
+    adata.uns['clone']['anno'] = anno_clone_filtered
