@@ -957,6 +957,8 @@ def filter_clone_traj(adata,
         anno_clone_traj_filtered = anno_clone_traj.loc[
             mask_keep,
         ].copy()
+        print("After filtering: "
+              f"{anno_clone_traj_filtered.shape[1]} clone paths")
         adata.obsm["X_clone_traj"] = X_clone_traj_filtered
         adata.uns["clone_traj"]["anno"] = anno_clone_traj_filtered
 
