@@ -18,7 +18,7 @@ from ._qc import (
     filter_genes,
     filter_peaks,
     filter_clones,
-    filter_clone_traj
+    filter_clone_traj,
 )
 from ._pca import (
     pca,
