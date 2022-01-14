@@ -63,20 +63,6 @@ def _dist(adata,
                              mat_coord,
                              df_time,
                              **kwargs)
-    elif method == 'sinkhorn':
-        try:
-            import geomloss
-        except ModuleNotFoundError:
-            print("Please install 'geomloss'!")
-        try:
-            import torch
-        except ModuleNotFoundError:
-            print("Please install 'torch'!")
-        from ._sinkhorn import _sinkhorn
-        mat_dist = _sinkhorn(mat_clone,
-                             mat_coord,
-                             df_time,
-                             **kwargs)
     else:
         raise ValueError(
             f'unrecognized method {method}')
