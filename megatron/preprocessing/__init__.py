@@ -19,7 +19,6 @@ from ._qc import (
     filter_peaks,
     filter_clones,
     filter_clone_traj,
-    filter_clone_time,
 )
 from ._pca import (
     pca,
