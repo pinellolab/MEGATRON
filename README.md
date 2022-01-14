@@ -1,8 +1,9 @@
+[![CI](https://github.com/pinellolab/megatron/actions/workflows/CI.yml/badge.svg)](https://github.com/pinellolab/MEGATRON/actions/workflows/CI.yml)
+
 # MEGATRON
 
 **MEGA** **TR**ajectories of cl**ON**es
 
-[![CI](https://github.com/pinellolab/megatron/actions/workflows/CI.yml/badge.svg)](https://github.com/pinellolab/MEGATRON/actions/workflows/CI.yml)
 ![megatron](./docs/source/_static/img/logo_200x204.png?raw=true)
 
 ## Datasets
