@@ -8,9 +8,9 @@
 
 ## Datasets
 
-* Larry [download](https://www.dropbox.com/sh/xgq8oiigfysx6gs/AADfODdSibQAS-1TFkgTcn8ba?dl=0)
+* Larry [download](https://mega.nz/folder/gVhFkYaA#FH3S3VoxxeIoTW6aR-sWcA)
 
-* Celltagging [download](https://www.dropbox.com/sh/vsvqd7djfc094gf/AAAAzqed9E9lXi4saYckhbTga?dl=0)
+* Celltagging [download](https://mega.nz/folder/EJ4FXIYC#8Kx_qiPl4DTBko3AJBjufQ)
 
 ## Tutorials
 
