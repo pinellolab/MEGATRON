@@ -1,7 +1,7 @@
 """General-purpose tools"""
 
 from scipy.cluster.hierarchy import (
-    dendrogram, linkage, fcluster)
+    linkage, fcluster)
 
 
 def _cluster(adata,

@@ -5,6 +5,7 @@ import time
 from ._directed_graph import _directed_graph
 from ._wasserstein import _wasserstein
 from ._mnn import _mnn
+from ._centroid import _centroid
 
 
 def _dist(adata,
@@ -52,42 +53,13 @@ def _dist(adata,
                         mat_coord,
                         df_time,
                         **kwargs)
-    elif method == 'mnn_parallel':
-        try:
-            import multiprocessing
-        except ModuleNotFoundError:
-            print("Please install 'multiprocessing'!")
-        from ._mnn_parallel import _mnn_parallel
-        mat_dist = _mnn_parallel(mat_clone,
-                                mat_coord,
-                                df_time,
-                                **kwargs)
     elif method == 'wasserstein':
         mat_dist = _wasserstein(mat_clone,
                                 mat_coord,
                                 df_time,
                                 **kwargs)
-    elif method == 'wasserstein_parallel':
-        try:
-            import multiprocessing
-        except ModuleNotFoundError:
-            print("Please install 'multiprocessing'!")
-        from ._wasserstein_parallel import _wasserstein_parallel
-        mat_dist = _wasserstein_parallel(mat_clone,
-                                mat_coord,
-                                df_time,
-                                **kwargs)
-    elif method == 'sinkhorn':
-        try:
-            import geomloss
-        except ModuleNotFoundError:
-            print("Please install 'geomloss'!")
-        try:
-            import torch
-        except ModuleNotFoundError:
-            print("Please install 'torch'!")
-        from ._sinkhorn import _sinkhorn
-        mat_dist = _sinkhorn(mat_clone,
+    elif method == 'centroid':
+        mat_dist = _centroid(mat_clone,
                              mat_coord,
                              df_time,
                              **kwargs)
