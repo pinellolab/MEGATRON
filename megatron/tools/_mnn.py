@@ -1,6 +1,5 @@
 import numpy as np
 from sklearn.neighbors import radius_neighbors_graph, kneighbors_graph
-
 # from scipy.spatial.distance import squareform
 import multiprocessing
 
@@ -9,17 +8,14 @@ import pandas as pd
 import sys
 
 
-def _mnn(
-    mat_clone,
-    mat_coord,
-    df_time,
-    dist="kneighbors",
-    radius=1.0,
-    neighbors=5,
-    mode="distance",
-    n_jobs=multiprocessing.cpu_count(),
-    centers=1,
-):
+def _mnn(mat_clone,
+         mat_coord,
+         df_time,
+         dist="kneighbors",
+         radius=1.0,
+         neighbors=5,
+         mode="distance",
+         n_jobs=1):
 
     print("Using %s CPUs" % n_jobs)
     time_steps = np.unique(df_time)
@@ -56,7 +52,7 @@ def _mnn(
         ts_i_dict = {}
         for t in time_steps:
             ts_i = cells_in_i[np.where(time_for_i == t)[0]]
-            ts_i_neighbors = coords[(np.isin(coords, ts_i)[:, 0] == True)]
+            ts_i_neighbors = coords[np.isin(coords, ts_i)[:, 0]]
             total_all_ts_i_neighbors = rng[
                 ts_i_neighbors[:, 0], ts_i_neighbors[:, 1]
             ].sum()
@@ -114,21 +110,19 @@ def calc_dist(params):
     for t in time_steps:
         ts_i_neighbors, total_all_ts_i_neighbors = ts_i_dict[t]
         ts_j = cells_in_j[np.where(time_for_j == t)[0]]
-        ts_j_neighbors = coords[(np.isin(coords, ts_j)[:, 0] == True)]
+        ts_j_neighbors = coords[np.isin(coords, ts_j)[:, 0]]
         total_all_ts_j_neighbors = rng[
             ts_j_neighbors[:, 0], ts_j_neighbors[:, 1]
         ].sum()
 
         ts_i_neighbors_in_j = ts_i_neighbors[
-            (np.isin(ts_i_neighbors, cells_in_j)[:, 1] == True)
-        ]
+            np.isin(ts_i_neighbors, cells_in_j)[:, 1]]
         total_ts_i_neighbors_in_j = rng[
             ts_i_neighbors_in_j[:, 0], ts_i_neighbors_in_j[:, 1]
         ].sum()
 
         ts_j_neighbors_in_i = ts_j_neighbors[
-            (np.isin(ts_j_neighbors, cells_in_i)[:, 1] == True)
-        ]
+            np.isin(ts_j_neighbors, cells_in_i)[:, 1]]
         total_ts_j_neighbors_in_i = rng[
             ts_j_neighbors_in_i[:, 0], ts_j_neighbors_in_i[:, 1]
         ].sum()
