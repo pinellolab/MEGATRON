@@ -92,8 +92,9 @@ def calc_dist(params):
                 )
             elif choice == "energy":
                 dists.append(
-                    energy_distance(coords_for_i[ts_i][:, d],
-                                    coords_for_j[ts_j][:, d])
+                    energy_distance(
+                        coords_for_i[ts_i][:, d], coords_for_j[ts_j][:, d]
+                    )
                 )
             else:
                 print("not supported")
