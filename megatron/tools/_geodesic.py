@@ -27,16 +27,6 @@ def _average_geodesic(ad_input,
         Cells by clones relation matrix.
     mat_coord: `array-like`
         Cell coordinate matrix
-    df_time: `pd.DataFrame`
-        Temporal information of cells
-    radius: `float`
-        Limiting distance of neighbors to return
-    min_cells: `int`
-        The minimum number of cells for each node(cluster)
-    eps: `float`
-        eps for DBSCAN clustering
-        The maximum distance between two samples for one to be considered
-        as in the neighborhood of the other.
 
     Returns
     -------
