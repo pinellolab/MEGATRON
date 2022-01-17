@@ -13,7 +13,7 @@ from ._centroid import _centroid
 
 def _dist(adata,
           target='clone',
-          method='directed_graph',
+          method='geodesic',
           obsm=None,
           layer=None,
           anno_time='time',
@@ -98,7 +98,7 @@ def _set_dist(adata,
 
 
 def clone_distance(adata,
-                   method='directed_graph',
+                   method='geodesic',
                    obsm=None,
                    layer=None,
                    anno_time='time',
@@ -113,9 +113,11 @@ def clone_distance(adata,
     method: `str`, (default: 'directed_graph');
         Method used to calculate clonal distances.
         Possible methods:
+        - 'geodesic': graph-based geodesic distance
         - 'directed_graph': shortest-path-based directed graph
         - 'mnn':
-        - 'wasserstein'
+        - 'wasserstein':
+        - 'centroid'
     layer: `str`, optional (default: None)
         The layer used to perform UMAP
     obsm: `str`, optional (default: None)
@@ -147,7 +149,7 @@ def clone_distance(adata,
 
 
 def clone_traj_distance(adata,
-                        method='directed_graph',
+                        method='geodesic',
                         obsm=None,
                         layer=None,
                         anno_time='time',

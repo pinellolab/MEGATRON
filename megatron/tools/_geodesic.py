@@ -1,4 +1,4 @@
-"""Functions for shortest-path-based direct graph distance"""
+"""Functions for graph-based geodesic distance"""
 
 import numpy as np
 import itertools
