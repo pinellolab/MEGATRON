@@ -48,11 +48,16 @@ def test_cluster_clones_weinreb20(adata, mat_clones, tmp_path):
                drawing_order='random')
     me.pp.filter_clones(adata, min_cells=1)
     me.tl.clone_distance(adata,
-                         method='directed_graph',
+                         method='geodesic',
                          obsm='X_SPRING',
                          layer=None,
-                         anno_time='Time point',
-                         radius=500)
+                         anno_time='Time point')
+    # me.tl.clone_distance(adata,
+    #                      method='directed_graph',
+    #                      obsm='X_SPRING',
+    #                      layer=None,
+    #                      anno_time='Time point',
+    #                      radius=500)
     me.tl.clone_distance(adata,
                          method='mnn',
                          obsm='X_SPRING',
@@ -64,7 +69,7 @@ def test_cluster_clones_weinreb20(adata, mat_clones, tmp_path):
                          layer=None,
                          anno_time='Time point')
     adata.uns['clone']['distance'] = \
-        adata.uns['clone']['distance_directed_graph'].copy()
+        adata.uns['clone']['distance_geodesic'].copy()
     me.tl.cluster_clones(adata,
                          n_clusters=3,
                          method='hierarchical')

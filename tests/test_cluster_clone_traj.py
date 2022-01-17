@@ -47,6 +47,11 @@ def test_cluster_clones_biddy18(adata, mat_clone_traj, tmp_path):
                drawing_order='random')
     me.pp.filter_clone_traj(adata, min_cells=1)
     me.tl.clone_traj_distance(adata,
+                              method='geodesic',
+                              obsm='X_tsne_paper',
+                              layer=None,
+                              anno_time='Day')
+    me.tl.clone_traj_distance(adata,
                               method='mnn',
                               obsm='X_tsne_paper',
                               layer=None,
@@ -57,6 +62,11 @@ def test_cluster_clones_biddy18(adata, mat_clone_traj, tmp_path):
                               layer=None,
                               anno_time='Day')
 
+    adata.uns['clone_traj']['distance'] = \
+        adata.uns['clone_traj']['distance_geodesic'].copy()
+    me.tl.cluster_clone_traj(adata,
+                             n_clusters=3,
+                             method='hierarchical')
     adata.uns['clone_traj']['distance'] = \
         adata.uns['clone_traj']['distance_mnn'].copy()
     me.tl.cluster_clone_traj(adata,
