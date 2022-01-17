@@ -15,7 +15,7 @@ def mat_clone_traj():
         "tests/data/clone_traj_biddy18.npz")
 
 
-def test_cluster_clones_weinreb20(adata, mat_clone_traj, tmp_path):
+def test_cluster_clones_biddy18(adata, mat_clone_traj, tmp_path):
     me.settings.set_workdir(tmp_path / "result_biddy18")
     me.settings.set_figure_params(dpi=80,
                                   style='white',
