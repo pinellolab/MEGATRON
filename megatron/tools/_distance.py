@@ -1,7 +1,10 @@
 """Functions to calculate the distances between clones"""
 
 import time
+import anndata as ad
+import pandas as pd
 
+from ._geodesic import _average_geodesic
 from ._directed_graph import _directed_graph
 from ._wasserstein import _wasserstein
 from ._mnn import _mnn
@@ -10,7 +13,7 @@ from ._centroid import _centroid
 
 def _dist(adata,
           target='clone',
-          method='directed_graph',
+          method='geodesic',
           obsm=None,
           layer=None,
           anno_time='time',
@@ -43,7 +46,16 @@ def _dist(adata,
             f'could not find {anno_time} in `adata.obs_keys()`')
     mat_clone = adata.obsm[f'X_{target}']
 
-    if method == 'directed_graph':
+    ad_input = ad.AnnData(X=mat_clone.copy(),
+                          obs=pd.DataFrame(df_time.copy()),
+                          var=pd.DataFrame(adata.uns[target]['anno'].copy()))
+    ad_input.obsm['X_coord'] = mat_coord.copy()
+    ad_input.uns['params'] = {'anno_time': anno_time}
+
+    if method == 'geodesic':
+        mat_dist = _average_geodesic(ad_input,
+                                     **kwargs)
+    elif method == 'directed_graph':
         mat_dist = _directed_graph(mat_clone,
                                    mat_coord,
                                    df_time,
@@ -86,7 +98,7 @@ def _set_dist(adata,
 
 
 def clone_distance(adata,
-                   method='directed_graph',
+                   method='geodesic',
                    obsm=None,
                    layer=None,
                    anno_time='time',
@@ -101,9 +113,11 @@ def clone_distance(adata,
     method: `str`, (default: 'directed_graph');
         Method used to calculate clonal distances.
         Possible methods:
+        - 'geodesic': graph-based geodesic distance
         - 'directed_graph': shortest-path-based directed graph
         - 'mnn':
-        - 'wasserstein'
+        - 'wasserstein':
+        - 'centroid'
     layer: `str`, optional (default: None)
         The layer used to perform UMAP
     obsm: `str`, optional (default: None)
@@ -112,6 +126,11 @@ def clone_distance(adata,
         Column name of observations (adata.obs) indicating temporal information
     **kwargs:
         Additional arguments to each method
+        - 'geodesic':
+            n_jobs: The number of parallel jobs to run (default: 1)
+            use_weight: Use weights for time annotation(default: False)
+            weight_time: a dictionary of weights for time annotation
+                         (default: None)
 
     Returns
     -------
@@ -135,13 +154,13 @@ def clone_distance(adata,
 
 
 def clone_traj_distance(adata,
-                        method='directed_graph',
+                        method='geodesic',
                         obsm=None,
                         layer=None,
                         anno_time='time',
                         **kwargs,
                         ):
-    """Calculate distances between clone paths
+    """Calculate distances between clone trajectories
 
     Parameters
     ----------
@@ -150,9 +169,11 @@ def clone_traj_distance(adata,
     method: `str`, (default: 'directed_graph');
         Method used to calculate clonal distances.
         Possible methods:
+        - 'geodesic': graph-based geodesic distance
         - 'directed_graph': shortest-path-based directed graph
         - 'mnn':
-        - 'wasserstein'
+        - 'wasserstein':
+        - 'centroid'
     layer: `str`, optional (default: None)
         The layer used to perform UMAP
     obsm: `str`, optional (default: None)
@@ -161,6 +182,11 @@ def clone_traj_distance(adata,
         Column name of observations (adata.obs) indicating temporal information
     **kwargs:
         Additional arguments to each method
+        - 'geodesic':
+            n_jobs: The number of parallel jobs to run (default: 1)
+            use_weight: Use weights for time annotation(default: False)
+            weight_time: a dictionary of weights for time annotation
+                         (default: None)
 
     Returns
     -------
@@ -195,9 +221,11 @@ def set_clone_distance(adata,
     method: `str`, (default: 'directed_graph');
         Method used to calculate clonal distances.
         Possible methods:
+        - 'geodesic': graph-based geodesic distance
         - 'directed_graph': shortest-path-based directed graph
         - 'mnn':
-        - 'wasserstein'
+        - 'wasserstein':
+        - 'centroid'
 
     Returns
     -------
@@ -224,9 +252,11 @@ def set_clone_traj_distance(adata,
     method: `str`, (default: 'directed_graph');
         Method used to calculate clonal distances.
         Possible methods:
+        - 'geodesic': graph-based geodesic distance
         - 'directed_graph': shortest-path-based directed graph
         - 'mnn':
-        - 'wasserstein'
+        - 'wasserstein':
+        - 'centroid'
 
     Returns
     -------

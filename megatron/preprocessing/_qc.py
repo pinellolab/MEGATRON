@@ -929,7 +929,8 @@ def filter_clone_traj(adata,
     anno_clone_traj_filtered = anno_clone_traj.loc[
         mask_keep,
     ].copy()
-    print(f"After filtering: {X_clone_traj_filtered.shape[1]} clone paths")
+    print(f"After filtering: {X_clone_traj_filtered.shape[1]}"
+          " clone trajectories")
     adata.obsm["X_clone_traj"] = X_clone_traj_filtered
     adata.uns["clone_traj"]["anno"] = anno_clone_traj_filtered
 
@@ -958,7 +959,7 @@ def filter_clone_traj(adata,
             mask_keep,
         ].copy()
         print("After filtering: "
-              f"{anno_clone_traj_filtered.shape[1]} clone paths")
+              f"{anno_clone_traj_filtered.shape[1]} clone trajectories")
         adata.obsm["X_clone_traj"] = X_clone_traj_filtered
         adata.uns["clone_traj"]["anno"] = anno_clone_traj_filtered
 

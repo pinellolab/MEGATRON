@@ -19,7 +19,6 @@ def _directed_graph(mat_clone,
                     eps=None
                     ):
     """Shortest-path-based directed graph
-
     Parameters
     ----------
     mat_clone: `array-like`
@@ -36,7 +35,6 @@ def _directed_graph(mat_clone,
         eps for DBSCAN clustering
         The maximum distance between two samples for one to be considered
         as in the neighborhood of the other.
-
     Returns
     -------
     mat_dist: `array-like`
