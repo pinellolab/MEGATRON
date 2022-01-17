@@ -12,7 +12,7 @@ from pandas.api.types import (
     is_string_dtype,
     is_categorical_dtype,
 )
-# import plotly.express as px
+import plotly.express as px
 # import plotly.graph_objects as go
 
 
@@ -1126,3 +1126,98 @@ def clone_traj_scatter(adata,
                          fig_name=fig_name,
                          **kwargs
                          )
+
+
+def scatter_3d(adata,
+               color=None,
+               obsm='X_umap',
+               layer=None,
+               dict_palette=None,
+               comp1=0,
+               comp2=1,
+               comp3=2,
+               alpha=1,
+               width=500,
+               height=500,
+               **kwargs):
+
+    if(sum(list(map(lambda x: x is not None,
+                    [layer, obsm]))) == 2):
+        raise ValueError("Only one of `layer` and `obsm` can be used")
+    elif obsm is not None:
+        if obsm in adata.obsm_keys():
+            mat_coord = adata.obsm[obsm]
+        else:
+            raise ValueError(
+                f'could not find {obsm} in `adata.obsm_keys()`')
+    elif layer is not None:
+        if layer in adata.layers.keys():
+            mat_coord = adata.layers[layer]
+        else:
+            raise ValueError(
+                f'could not find {layer} in `adata.layers.keys()`')
+    else:
+        mat_coord = adata.X
+
+    assert mat_coord.shape[1] >= 3, "At least 3 componets are required"
+
+    if dict_palette is None:
+        dict_palette = dict()
+    if color is None:
+        color = []
+        return "No `color` is specified"
+    else:
+        color = list(dict.fromkeys(color))  # remove duplicate keys
+        df_plot = pd.DataFrame(index=adata.obs.index,
+                               data=mat_coord,
+                               columns=['Dim'+str(x+1) for x in
+                                        range(mat_coord.shape[1])])
+        for ann in color:
+            if(ann in adata.obs_keys()):
+                df_plot[ann] = adata.obs[ann]
+                if(not is_numeric_dtype(df_plot[ann])):
+                    if 'color' not in adata.uns_keys():
+                        adata.uns['color'] = dict()
+
+                    if ann not in dict_palette.keys():
+                        if (ann+'_color' in adata.uns['color'].keys()) \
+                            and \
+                            (all(np.isin(np.unique(df_plot[ann]),
+                                         list(adata.uns['color'].keys())))):
+                            dict_palette[ann] = \
+                                adata.uns['color'][ann+'_color']
+                        else:
+                            dict_palette[ann] = \
+                                generate_palette(adata.obs[ann])
+                            adata.uns['color'][ann+'_color'] = \
+                                dict_palette[ann].copy()
+                    else:
+                        if ann+'_color' not in adata.uns['color'].keys():
+                            adata.uns['color'][ann+'_color'] = \
+                                dict_palette[ann].copy()
+
+            elif(ann in adata.var_names):
+                df_plot[ann] = adata.obs_vector(ann)
+            else:
+                raise ValueError(f"could not find {ann} in `adata.obs.columns`"
+                                 " and `adata.var_names`")
+
+        for ann in color:
+            fig = px.scatter_3d(
+                df_plot,
+                x='Dim'+str(comp1+1),
+                y='Dim'+str(comp2+1),
+                z='Dim'+str(comp3+1),
+                color=ann,
+                opacity=alpha,
+                color_continuous_scale=px.colors.sequential.Viridis,
+                color_discrete_map=adata.uns['color'][ann+'_color']
+                if ann+'_color' in adata.uns['color'].keys() else {},
+                **kwargs
+                )
+            fig.update_traces(marker=dict(size=2))
+            fig.update_layout(legend={'itemsizing': 'constant'},
+                              width=width,
+                              height=height,
+                              scene=dict(aspectmode='cube'))
+            fig.show(renderer="notebook")

@@ -1,3 +1,5 @@
+[![CI](https://github.com/pinellolab/megatron/actions/workflows/CI.yml/badge.svg)](https://github.com/pinellolab/MEGATRON/actions/workflows/CI.yml)
+
 # MEGATRON
 
 **MEGA** **TR**ajectories of cl**ON**es
@@ -6,13 +8,14 @@
 
 ## Datasets
 
-* Larry [download](https://www.dropbox.com/sh/xgq8oiigfysx6gs/AADfODdSibQAS-1TFkgTcn8ba?dl=0)
+* Larry [download](https://mega.nz/folder/gVhFkYaA#FH3S3VoxxeIoTW6aR-sWcA)
 
-* Celltagging [download](https://www.dropbox.com/sh/vsvqd7djfc094gf/AAAAzqed9E9lXi4saYckhbTga?dl=0)
+* Celltagging [download](https://mega.nz/folder/EJ4FXIYC#8Kx_qiPl4DTBko3AJBjufQ)
 
 ## Tutorials
 
 * [larry_subset](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/larry_subset.ipynb)
+* [larry_subset_3dplot](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/larry_subset_3dplot.ipynb)
 * [larry](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/larry.ipynb)
 * [celltagging_clones](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/celltagging_clones.ipynb)
 * [celltagging_clone_traj](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/celltagging_clone_traj.ipynb)
