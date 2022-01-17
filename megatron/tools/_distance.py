@@ -48,7 +48,7 @@ def _dist(adata,
 
     ad_input = ad.AnnData(X=mat_clone.copy(),
                           obs=pd.DataFrame(df_time.copy()),
-                          var=pd.DataFrame(adata.uns['clone']['anno'].copy()))
+                          var=pd.DataFrame(adata.uns[target]['anno'].copy()))
     ad_input.obsm['X_coord'] = mat_coord.copy()
     ad_input.uns['params'] = {'anno_time': anno_time}
 
