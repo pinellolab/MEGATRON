@@ -128,6 +128,8 @@ def clone_distance(adata,
         Additional arguments to each method
         - 'geodesic':
             n_jobs: The number of parallel jobs to run (default: 1)
+            k: The number of neighbors (default: 3)
+            metric: Distance metric (default: 'euclidean')
             use_weight: Use weights for time annotation(default: False)
             weight_time: a dictionary of weights for time annotation
                          (default: None)
