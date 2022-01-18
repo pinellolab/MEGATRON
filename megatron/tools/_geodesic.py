@@ -43,6 +43,8 @@ def _average_geodesic(ad_input,
             if not (set(ad_input.obs[anno_time]) == set(weight_time.keys())):
                 raise ValueError("keys in `weight_time` "
                                  "do not match time annotation")
+        else:
+            print("`weight_time` is not speficied. `use_weight` is ingored.")
 
     G = _build_graph(ad_input,
                      k=k,
@@ -72,6 +74,7 @@ def _build_graph(ad_input,
     G = nx.Graph()
     time_sorted = np.unique(ad_input.obs[anno_time])
     mat_clone = ad_input.X
+    # for each clone, build a graph of each timepoint
     for i_clone, clone in enumerate(ad_input.var_names):
         cells_i = ad_input.obs_names[mat_clone[:, i_clone].nonzero()[0]]
         ad_input_i = ad_input[cells_i, ]
@@ -79,11 +82,14 @@ def _build_graph(ad_input,
             squareform(pdist(ad_input_i.obsm['X_coord'], metric=metric))
         gp_i = ad_input_i.obs.groupby(anno_time)
         time_sorted_i = sort_list(gp_i.groups.keys(), time_sorted)
+
+        # if there are multiple timepoints
         if len(time_sorted_i) > 1:
+            # for each pair of adjacent timepoints
             for t1, t2 in list(zip(time_sorted_i[:-1], time_sorted_i[1:])):
                 cells_i_t = gp_i.get_group(t1).index.tolist() \
                     + gp_i.get_group(t2).index.tolist()
-                # knn
+                # Build a KNN graph
                 k_ = min(k, len(cells_i_t))
                 mat_dis_i_t = ad_input_i[cells_i_t, ].obsp['dist']
                 nbrs = NearestNeighbors(n_neighbors=k_,
@@ -94,7 +100,8 @@ def _build_graph(ad_input,
                 mapping = dict(zip(np.arange(len(cells_i_t)), cells_i_t))
                 G_i_t = nx.relabel_nodes(G_i_t, mapping)
                 G.add_edges_from(G_i_t.to_undirected().edges(data=True))
-                # add MST to make sure the graph is connected
+                # add a MST to make sure the graph of two adjacent graphs
+                # is connected
                 G_i_t_complete = nx.from_scipy_sparse_matrix(
                     csr_matrix(mat_dis_i_t), edge_attribute='dist')
                 mapping = dict(zip(np.arange(len(cells_i_t)), cells_i_t))
@@ -102,10 +109,12 @@ def _build_graph(ad_input,
                 tree_i_t = nx.minimum_spanning_tree(G_i_t_complete,
                                                     weight='dist')
                 G.add_edges_from(tree_i_t.to_undirected().edges(data=True))
+
+        # if there is only one timepoint
         else:
             cells_i_t = gp_i.get_group(time_sorted_i[0]).index.tolist()
             k_ = min(k, len(cells_i_t))
-            # knn
+            # Build a KNN graph
             mat_dis_i_t = ad_input_i[cells_i_t, ].obsp['dist']
             nbrs = NearestNeighbors(n_neighbors=k_,
                                     metric='precomputed').fit(mat_dis_i_t)
@@ -115,7 +124,7 @@ def _build_graph(ad_input,
             mapping = dict(zip(np.arange(len(cells_i_t)), cells_i_t))
             G_i_t = nx.relabel_nodes(G_i_t, mapping)
             G.add_edges_from(G_i_t.to_undirected().edges(data=True))
-            # add MST to make sure the graph is connected
+            # add a MST to make sure the graph is connected
             G_i_t_complete = nx.from_scipy_sparse_matrix(
                 csr_matrix(mat_dis_i_t), edge_attribute='dist')
             mapping = dict(zip(np.arange(len(cells_i_t)), cells_i_t))
