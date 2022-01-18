@@ -742,9 +742,6 @@ def umap(adata,
          color=None,
          dict_palette=None,
          n_components=None,
-         comp1=0,
-         comp2=1,
-         comp3=2,
          size=8,
          drawing_order='sorted',
          dict_drawing_order=None,
@@ -771,12 +768,8 @@ def umap(adata,
 
     Parameters
     ----------
-    data: `pd.DataFrame`
-        Input data structure of shape (n_samples, n_features).
-    x: `str`
-        Variable in `data` that specify positions on the x axis.
-    y: `str`
-        Variable in `data` that specify positions on the x axis.
+    adata: `Anndata`
+        Annotated data matrix of shape (n_samples, n_features).
     color: `str`, optional (default: None)
         A list of variables that will produce points with different colors.
         e.g. color = ['anno1', 'anno2']
@@ -940,7 +933,6 @@ def umap(adata,
                                      **kwargs)
     if copy:
         return list_ax
-
 
 
 def _scatterplot2d_clone(adata,
@@ -1126,6 +1118,212 @@ def clone_traj_scatter(adata,
                          fig_name=fig_name,
                          **kwargs
                          )
+
+
+def scatter(adata,
+            color=None,
+            obsm='X_umap',
+            layer=None,
+            dict_palette=None,
+            size=8,
+            drawing_order='sorted',
+            dict_drawing_order=None,
+            show_texts=False,
+            texts=None,
+            text_size=10,
+            fig_size=None,
+            fig_ncol=3,
+            fig_legend_ncol=1,
+            fig_legend_order=None,
+            vmin=None,
+            vmax=None,
+            alpha=1,
+            pad=1.08,
+            w_pad=None,
+            h_pad=None,
+            save_fig=None,
+            fig_path=None,
+            fig_name='scatterplot2d.pdf',
+            plolty=False,
+            copy=False,
+            **kwargs):
+    """ Plot coordinates in 2D scatterplot
+
+    Parameters
+    ----------
+    adata: `Anndata`
+        Annotated data matrix of shape (n_samples, n_features).
+    color: `str`, optional (default: None)
+        A list of variables that will produce points with different colors.
+        e.g. color = ['anno1', 'anno2']
+    dict_palette: `dict`,optional (default: None)
+        A dictionary of palettes for different variables in `color`.
+        Only valid for categorical/string variables
+        e.g. dict_palette = {'ann1': {},'ann2': {}}
+    drawing_order: `str` (default: 'sorted')
+        The order in which values are plotted, This can be
+        one of the following values
+        - 'original': plot points in the same order as in input dataframe
+        - 'sorted' : plot points with higher values on top.
+        - 'random' : plot points in a random order
+    size: `int` (default: 8)
+        Point size.
+    fig_size: `tuple`, optional (default: None)
+        figure size.
+    fig_ncol: `int`, optional (default: 3)
+        the number of columns of the figure panel
+    fig_legend_order: `dict`,optional (default: None)
+        Specified order for the appearance of the annotation keys.
+        Only valid for categorical/string variable
+        e.g. fig_legend_order = {'ann1':['a','b','c'],'ann2':['aa','bb','cc']}
+    fig_legend_ncol: `int`, optional (default: 1)
+        The number of columns that the legend has.
+    vmin,vmax: `float`, optional (default: None)
+        The min and max values are used to normalize continuous values.
+        If None, the respective min and max of continuous values is used.
+    alpha: `float`, optional (default: 0.8)
+        0.0 transparent through 1.0 opaque
+    pad: `float`, optional (default: 1.08)
+        Padding between the figure edge and the edges of subplots,
+        as a fraction of the font size.
+    h_pad, w_pad: `float`, optional (default: None)
+        Padding (height/width) between edges of adjacent subplots,
+        as a fraction of the font size. Defaults to pad.
+    save_fig: `bool`, optional (default: False)
+        if True,save the figure.
+    fig_path: `str`, optional (default: None)
+        If save_fig is True, specify figure path.
+    fig_name: `str`, optional (default: 'scatterplot2d.pdf')
+        if save_fig is True, specify figure name.
+    Returns
+    -------
+    None
+    """
+
+    if fig_size is None:
+        fig_size = mpl.rcParams['figure.figsize']
+    if save_fig is None:
+        save_fig = settings.save_fig
+    if fig_path is None:
+        fig_path = os.path.join(settings.workdir, 'figures')
+
+    if(sum(list(map(lambda x: x is not None,
+                    [layer, obsm]))) == 2):
+        raise ValueError("Only one of `layer` and `obsm` can be used")
+    elif obsm is not None:
+        if obsm in adata.obsm_keys():
+            mat_coord = adata.obsm[obsm]
+        else:
+            raise ValueError(
+                f'could not find {obsm} in `adata.obsm_keys()`')
+    elif layer is not None:
+        if layer in adata.layers.keys():
+            mat_coord = adata.layers[layer]
+        else:
+            raise ValueError(
+                f'could not find {layer} in `adata.layers.keys()`')
+    else:
+        mat_coord = adata.X
+
+    if dict_palette is None:
+        dict_palette = dict()
+    df_plot = pd.DataFrame(index=adata.obs.index,
+                           data=mat_coord[:, :2],
+                           columns=['Dim1', 'Dim2'])
+    if color is None:
+        list_ax = _scatterplot2d(df_plot,
+                                 x='Dim1',
+                                 y='Dim2',
+                                 drawing_order=drawing_order,
+                                 size=size,
+                                 show_texts=show_texts,
+                                 text_size=text_size,
+                                 texts=texts,
+                                 fig_size=fig_size,
+                                 alpha=alpha,
+                                 pad=pad,
+                                 w_pad=w_pad,
+                                 h_pad=h_pad,
+                                 save_fig=save_fig,
+                                 fig_path=fig_path,
+                                 fig_name=fig_name,
+                                 copy=copy,
+                                 **kwargs)
+    else:
+        color = list(dict.fromkeys(color))  # remove duplicate keys
+        for ann in color:
+            if(ann in adata.obs_keys()):
+                df_plot[ann] = adata.obs[ann]
+                if(not is_numeric_dtype(df_plot[ann])):
+                    if 'color' not in adata.uns_keys():
+                        adata.uns['color'] = dict()
+
+                    if ann not in dict_palette.keys():
+                        if (ann+'_color' in adata.uns['color'].keys()) \
+                            and \
+                            (all(np.isin(np.unique(df_plot[ann]),
+                                         list(adata.uns['color']
+                                         [ann+'_color'].keys())))):
+                            dict_palette[ann] = \
+                                adata.uns['color'][ann+'_color']
+                        else:
+                            dict_palette[ann] = \
+                                generate_palette(adata.obs[ann])
+                            adata.uns['color'][ann+'_color'] = \
+                                dict_palette[ann].copy()
+                    else:
+                        if ann+'_color' not in adata.uns['color'].keys():
+                            adata.uns['color'][ann+'_color'] = \
+                                dict_palette[ann].copy()
+
+            elif(ann in adata.var_names):
+                df_plot[ann] = adata.obs_vector(ann)
+            else:
+                raise ValueError(f"could not find {ann} in `adata.obs.columns`"
+                                 " and `adata.var_names`")
+        if plolty:
+            _scatterplot2d_plotly(df_plot,
+                                  x='Dim1',
+                                  y='Dim2',
+                                  list_hue=color,
+                                  hue_palette=dict_palette,
+                                  drawing_order=drawing_order,
+                                  fig_size=fig_size,
+                                  fig_ncol=fig_ncol,
+                                  fig_legend_order=fig_legend_order,
+                                  alpha=alpha,
+                                  save_fig=save_fig,
+                                  fig_path=fig_path,
+                                  **kwargs)
+        else:
+            list_ax = _scatterplot2d(df_plot,
+                                     x='Dim1',
+                                     y='Dim2',
+                                     list_hue=color,
+                                     hue_palette=dict_palette,
+                                     drawing_order=drawing_order,
+                                     dict_drawing_order=dict_drawing_order,
+                                     size=size,
+                                     show_texts=show_texts,
+                                     text_size=text_size,
+                                     texts=texts,
+                                     fig_size=fig_size,
+                                     fig_ncol=fig_ncol,
+                                     fig_legend_ncol=fig_legend_ncol,
+                                     fig_legend_order=fig_legend_order,
+                                     vmin=vmin,
+                                     vmax=vmax,
+                                     alpha=alpha,
+                                     pad=pad,
+                                     w_pad=w_pad,
+                                     h_pad=h_pad,
+                                     save_fig=save_fig,
+                                     fig_path=fig_path,
+                                     fig_name=fig_name,
+                                     copy=copy,
+                                     **kwargs)
+    if copy:
+        return list_ax
 
 
 def scatter_3d(adata,
