@@ -43,9 +43,6 @@ def _average_geodesic(ad_input,
             if not (set(ad_input.obs[anno_time]) == set(weight_time.keys())):
                 raise ValueError("keys in `weight_time` "
                                  "do not match time annotation")
-        else:
-            print("`weight_time` is not speficied. `use_weight` is ingored.")
-
     G = _build_graph(ad_input,
                      k=k,
                      metric=metric)
@@ -239,8 +236,14 @@ def _pairwise_geodesic_dist(ad_input,
     mat_time = np.array([dict_time[x] for x in df_time.values])
     if use_weight:
         if weight_time is None:
+            print(f"`weight_time` is not speficied. The {anno_time} are "
+                  "auto-weighted based on the occurence order.")
             mat_time_w = mat_time.copy()
             mat_time_w = (mat_time_w+1)/(max(mat_time_w)+1)
+            time_w_sorted = np.unique(mat_time_w)
+            dict_time_w = {x: time_w_sorted[i]
+                           for i, x in enumerate(time_sorted)}
+            print(f"The weights of {anno_time} are {dict_time_w}")
         else:
             mat_time_w = np.array([weight_time[x] for x in df_time.values])
     else:
