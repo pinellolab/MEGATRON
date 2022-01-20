@@ -152,7 +152,8 @@ def _cal_geodesic_dist(ad_input,
     mat_time_w_i = mat_time_w[ind_i]
     mat_time_w_j = mat_time_w[ind_j]
 
-    # mutual nearest neighbors
+    # find mutual-knearest-neighbor cells when considering k nearest neighbors
+    # from two clones
     k_ = min(k, len(ind_i), len(ind_j))
     mat_dist_ij = cdist(mat_coord_i, mat_coord_j, metric=metric)
     mat_knn_i = np.zeros(shape=mat_dist_ij.shape)
@@ -165,23 +166,20 @@ def _cal_geodesic_dist(ad_input,
     max_mnn = mat_mnn.max()
     mat_mnn = np.where(mat_mnn == max_mnn, 1, 0)
 
-    # mutual nearest times
+    # find mutual-nearest-time cells from two clones
     mat_time_dist_ij = cdist(mat_time_i.reshape(-1, 1),
                              mat_time_j.reshape(-1, 1),
                              metric='cityblock')
     min_time_dist = mat_time_dist_ij.min()
     mat_time_nn = np.where(mat_time_dist_ij == min_time_dist, 1, 0)
 
-    # keep edges that satisfy both mnn and mnt
+    # find edges that satisfy both MNN and MNT
     mat_sum = mat_mnn + mat_time_nn
     max_sum = mat_sum.max()
     ids_i, ids_j = np.where(mat_sum == max_sum)
 
-    mat_sum = mat_knn_i + mat_knn_j + mat_time_nn
-    max_sum = mat_sum.max()
-    ids_i, ids_j = np.where(mat_sum == max_sum)
-
-    # connect graph i and graph j
+    # connect graph i and graph j through the edges
+    # that satisfy both mnn and mnt
     cells_i = ad_input.obs_names[ind_i]
     cells_j = ad_input.obs_names[ind_j]
     G_ij = G.subgraph(cells_i.tolist() + cells_j.tolist()).copy()
@@ -190,7 +188,7 @@ def _cal_geodesic_dist(ad_input,
                                      mat_dist_ij[ids_i, ids_j]),
                                  weight='dist')
 
-    # calculate average shortest paths for mutual-nearest-times nodes
+    # calculate average shortest paths for each pair of MNT nodes
     ids_ii, ids_jj = np.where(mat_time_nn == 1)
     mat_time_nn_len = np.zeros(mat_time_nn.shape)
     mat_time_nn_len.fill(np.nan)
@@ -204,10 +202,12 @@ def _cal_geodesic_dist(ad_input,
                                                           source=cells_i[ii],
                                                           target=cells_j[jj],
                                                           weight='dist')
+        # remove the confounding factor #cells
         mat_time_nn_len[ii, jj] *= \
             1/dict_freq_ij[mat_time_i[ii] + mat_time_j[jj]]
         if use_weight:
             mat_time_nn_len[ii, jj] *= max(mat_time_w_i[ii], mat_time_w_j[jj])
+    # remove the confounding factor #timepoints
     dist = np.sum(mat_time_nn_len[ids_ii, ids_jj])/len(dict_freq_ij)
     return dist
 
@@ -237,13 +237,13 @@ def _pairwise_geodesic_dist(ad_input,
     if use_weight:
         if weight_time is None:
             print(f"`weight_time` is not speficied. The {anno_time} are "
-                  "auto-weighted based on the occurence order.")
-            mat_time_w = mat_time.copy()
-            mat_time_w = (mat_time_w+1)/(max(mat_time_w)+1)
-            time_w_sorted = np.unique(mat_time_w)
-            dict_time_w = {x: time_w_sorted[i]
-                           for i, x in enumerate(time_sorted)}
+                  f"auto-weighted based on #cells in each {anno_time}.")
+            dict_n_cells = collections.Counter(df_time)
+            n_cells = df_time.shape[0]
+            dict_time_w = {x: dict_n_cells[x]/n_cells
+                           for x in time_sorted}
             print(f"The weights of {anno_time} are {dict_time_w}")
+            mat_time_w = np.array([dict_time_w[x] for x in df_time.values])
         else:
             mat_time_w = np.array([weight_time[x] for x in df_time.values])
     else:
