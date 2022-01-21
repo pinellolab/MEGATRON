@@ -17,6 +17,7 @@ def _dist(adata,
           obsm=None,
           layer=None,
           anno_time='time',
+          n_jobs=1,
           **kwargs):
     """Calculate distances between clones or clone trajectories
     """
@@ -54,27 +55,30 @@ def _dist(adata,
 
     if method == 'geodesic':
         mat_dist = _average_geodesic(ad_input,
+                                     n_jobs=n_jobs,
                                      **kwargs)
     elif method == 'directed_graph':
         mat_dist = _directed_graph(mat_clone,
                                    mat_coord,
                                    df_time,
+                                   n_jobs=n_jobs,
                                    **kwargs)
     elif method == 'mnn':
         mat_dist = _mnn(mat_clone,
                         mat_coord,
                         df_time,
+                        n_jobs=n_jobs,
                         **kwargs)
     elif method == 'wasserstein':
         mat_dist = _wasserstein(mat_clone,
                                 mat_coord,
                                 df_time,
+                                n_jobs=n_jobs,
                                 **kwargs)
     elif method == 'centroid':
         mat_dist = _centroid(mat_clone,
                              mat_coord,
-                             df_time,
-                             **kwargs)
+                             df_time)
     else:
         raise ValueError(
             f'unrecognized method {method}')
@@ -102,6 +106,7 @@ def clone_distance(adata,
                    obsm=None,
                    layer=None,
                    anno_time='time',
+                   n_jobs=1,
                    **kwargs,
                    ):
     """Calculate distances between clones
@@ -124,15 +129,17 @@ def clone_distance(adata,
         The multi-dimensional annotation of observations used to perform UMAP
     time: `str`, optional (default: 'time')
         Column name of observations (adata.obs) indicating temporal information
+    n_jobs: `int`, optional (default: 1)
+        The number of parallel jobs to run
     **kwargs:
         Additional arguments to each method
         - 'geodesic':
-            n_jobs: The number of parallel jobs to run (default: 1)
-            k: The number of neighbors (default: 3)
-            metric: Distance metric (default: 'euclidean')
-            use_weight: Use weights for time annotation(default: False)
-            weight_time: a dictionary of weights for time annotation
-                         (default: None)
+            use_weight: `bool`, optional (default: False)
+                Use weights for time annotation
+                Only valid when 'geodesic' is used.
+            weight_time: `dict`, optional (default: None)
+                a dictionary of weights for time annotation
+                Only valid when 'geodesic' is used.
 
     Returns
     -------
@@ -150,6 +157,7 @@ def clone_distance(adata,
           obsm=obsm,
           layer=layer,
           anno_time=anno_time,
+          n_jobs=n_jobs,
           **kwargs)
     ed = time.time()
     print(f'Finished: {(ed-st)/60} mins')
@@ -160,6 +168,7 @@ def clone_traj_distance(adata,
                         obsm=None,
                         layer=None,
                         anno_time='time',
+                        n_jobs=1,
                         **kwargs,
                         ):
     """Calculate distances between clone trajectories
@@ -182,13 +191,17 @@ def clone_traj_distance(adata,
         The multi-dimensional annotation of observations used to perform UMAP
     time: `str`, optional (default: 'time')
         Column name of observations (adata.obs) indicating temporal information
+    n_jobs: `int`, optional (default: 1)
+        The number of parallel jobs to run
     **kwargs:
         Additional arguments to each method
         - 'geodesic':
-            n_jobs: The number of parallel jobs to run (default: 1)
-            use_weight: Use weights for time annotation(default: False)
-            weight_time: a dictionary of weights for time annotation
-                         (default: None)
+            use_weight: `bool`, optional (default: False)
+                Use weights for time annotation
+                Only valid when 'geodesic' is used.
+            weight_time: `dict`, optional (default: None)
+                a dictionary of weights for time annotation
+                Only valid when 'geodesic' is used.
 
     Returns
     -------
@@ -206,6 +219,7 @@ def clone_traj_distance(adata,
           obsm=obsm,
           layer=layer,
           anno_time=anno_time,
+          n_jobs=n_jobs,
           **kwargs)
     ed = time.time()
     print(f'Finished: {(ed-st)/60} mins')
