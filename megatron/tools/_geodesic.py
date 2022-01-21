@@ -14,7 +14,7 @@ from scipy.spatial.distance import pdist, cdist, squareform
 
 
 def _average_geodesic(ad_input,
-                      n_clusters=100,
+                      n_clusters=80,
                       clustering='kmeans',
                       k=3,
                       metric='euclidean',
@@ -86,7 +86,7 @@ def _build_graph(ad_input,
         raise ValueError(
             f'"{clustering}" is not supported yet')
     ad_input.obs['cluster'] = clust
-
+    ad_input.uns['cluster_pos'] = clust_pos
     # build a connected graph of clusters
     G = nx.Graph()
     k_ = min(k, n_clusters)
