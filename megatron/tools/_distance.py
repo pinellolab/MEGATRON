@@ -5,7 +5,7 @@ import anndata as ad
 import pandas as pd
 
 from ._geodesic import _average_geodesic
-from ._directed_graph import _directed_graph
+# from ._directed_graph import _directed_graph
 from ._wasserstein import _wasserstein
 from ._mnn import _mnn
 from ._centroid import _centroid
@@ -57,12 +57,12 @@ def _dist(adata,
         mat_dist = _average_geodesic(ad_input,
                                      n_jobs=n_jobs,
                                      **kwargs)
-    elif method == 'directed_graph':
-        mat_dist = _directed_graph(mat_clone,
-                                   mat_coord,
-                                   df_time,
-                                   n_jobs=n_jobs,
-                                   **kwargs)
+    # elif method == 'directed_graph':
+    #     mat_dist = _directed_graph(mat_clone,
+    #                                mat_coord,
+    #                                df_time,
+    #                                n_jobs=n_jobs,
+    #                                **kwargs)
     elif method == 'mnn':
         mat_dist = _mnn(mat_clone,
                         mat_coord,
