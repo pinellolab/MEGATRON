@@ -9,5 +9,6 @@ from ._plot import (
     umap,
     clone_scatter,
     clone_traj_scatter,
+    scatter,
     scatter_3d
 )
