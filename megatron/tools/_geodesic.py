@@ -62,7 +62,7 @@ def _average_geodesic(ad_input,
 
 
 def _build_graph(ad_input,
-                 n_clusters=100,
+                 n_clusters=80,
                  clustering='kmeans',
                  k=3,
                  metric='euclidean'):
@@ -77,6 +77,10 @@ def _build_graph(ad_input,
     mat_clone = ad_input.X
     mat_coord = ad_input.obsm['X_coord']
 
+    if ad_input.shape[0] < n_clusters:
+        print("The number of samples is smaller than `n_clusters`")
+        n_clusters = ad_input.shape[0]
+        print(f"`n_clusters` has been corrected to {n_clusters}")
     # clustering cells
     if clustering == 'kmeans':
         kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(mat_coord)
