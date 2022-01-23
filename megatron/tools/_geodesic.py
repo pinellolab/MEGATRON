@@ -47,14 +47,13 @@ def _average_geodesic(ad_input,
                 raise ValueError("keys in `weight_time` "
                                  "do not match time annotation")
 
-    G, mat_clust_clone = _build_graph(ad_input,
-                                      n_clusters=n_clusters,
-                                      clustering=clustering,
-                                      k=k,
-                                      metric=metric)
+    G = _build_graph(ad_input,
+                     n_clusters=n_clusters,
+                     clustering=clustering,
+                     k=k,
+                     metric=metric)
     list_dist = _pairwise_geodesic_dist(ad_input,
                                         G,
-                                        mat_clust_clone,
                                         n_jobs=n_jobs,
                                         use_weight=use_weight,
                                         weight_time=weight_time)
@@ -132,7 +131,9 @@ def _build_graph(ad_input,
         for x in dict_clust_i.keys():
             mat_clust_clone[x, i] = max(set(dict_clust_i[x]),
                                         key=dict_clust_i[x].count)
-    return G, mat_clust_clone
+    ad_input.uns['cluster_pdist'] = mat_dist
+    ad_input.uns['cluster_clone'] = mat_clust_clone
+    return G
 
 
 # def _build_graph(ad_input,
@@ -213,6 +214,7 @@ def _build_graph(ad_input,
 
 def _cal_geodesic_dist(G,
                        mat_clust_clone,
+                       mat_clust_pdist,
                        use_weight,
                        dict_time_w_conv,
                        i,
@@ -221,37 +223,52 @@ def _cal_geodesic_dist(G,
     ind_j = np.where(mat_clust_clone[:, j] > 0)[0]
     mat_time_i = mat_clust_clone[ind_i, i]
     mat_time_j = mat_clust_clone[ind_j, j]
-    mat_time_w_i = [dict_time_w_conv[x] for x in mat_time_i]
-    mat_time_w_j = [dict_time_w_conv[x] for x in mat_time_j]
+    mat_dist_ij = mat_clust_pdist[ind_i, :][:, ind_j]
 
-    # find mutual-nearest-time cells from two clones
+    # temporal distance between nodes of two clones
     mat_time_dist_ij = cdist(mat_time_i.reshape(-1, 1),
                              mat_time_j.reshape(-1, 1),
                              metric='cityblock')
-    min_time_dist = mat_time_dist_ij.min()
-    mat_time_nn = np.where(mat_time_dist_ij == min_time_dist, 1, 0)
+    # for each timepoint, calculate the distances between nodes of two clones
+    dict_geo = {}
+    for ii in range(mat_time_dist_ij.shape[0]):
+        # find nodes of the nearest timepoints in the other clone
+        jj_nt = np.where(
+            mat_time_dist_ij[ii, :] == min(mat_time_dist_ij[ii, :]))[0]
+        # find the nearest node within these nodes
+        jj_nn = jj_nt[np.argmin(mat_dist_ij[ii, jj_nt])]
+        dist_ii = nx.shortest_path_length(G,
+                                          source=ind_i[ii],
+                                          target=ind_j[jj_nn],
+                                          weight='dist')
+        if mat_time_i[ii] not in dict_geo.keys():
+            dict_geo[mat_time_i[ii]] = [dist_ii]
+        else:
+            dict_geo[mat_time_i[ii]].append(dist_ii)
+    for jj in range(mat_time_dist_ij.shape[1]):
+        # find nodes of the nearest timepoints in the other clone
+        ii_nt = np.where(
+            mat_time_dist_ij[:, jj] == min(mat_time_dist_ij[:, jj]))[0]
+        # find the nearest nodes within these nodes
+        ii_nn = ii_nt[np.argmin(mat_dist_ij[ii_nt, jj])]
+        dist_jj = nx.shortest_path_length(G,
+                                          source=ind_j[jj],
+                                          target=ind_i[ii_nn],
+                                          weight='dist')
+        if mat_time_j[jj] not in dict_geo.keys():
+            dict_geo[mat_time_j[jj]] = [dist_jj]
+        else:
+            dict_geo[mat_time_j[jj]].append(dist_jj)
 
-    # calculate average shortest paths for each pair of MNT nodes
-    ids_ii, ids_jj = np.where(mat_time_nn == 1)
-    mat_time_nn_len = np.zeros(mat_time_nn.shape)
-    mat_time_nn_len.fill(np.nan)
-
-    # unique combinations of nearest timepoints
-    dict_freq_ij = \
-        collections.Counter(list(zip(mat_time_i[ids_ii], mat_time_j[ids_jj])))
-    for ii, jj in zip(ids_ii, ids_jj):
-        mat_time_nn_len[ii, jj] = nx.shortest_path_length(G,
-                                                          source=ind_i[ii],
-                                                          target=ind_j[jj],
-                                                          weight='dist')
-        # remove the confounding factor #pairs_of_MNT
-        mat_time_nn_len[ii, jj] *= \
-            1/dict_freq_ij[(mat_time_i[ii], mat_time_j[jj])]
-        if use_weight:
-            mat_time_nn_len[ii, jj] *= max(mat_time_w_i[ii],
-                                           mat_time_w_j[jj])
-    # remove the confounding factor #timepoints
-    dist = np.sum(mat_time_nn_len[ids_ii, ids_jj])/len(dict_freq_ij)
+    # remove the confounding factor #nodes(clusters) and #timepoints
+    if use_weight:
+        dist = sum(
+            [dict_time_w_conv[x]*sum(dict_geo[x])/len(dict_geo[x])
+             for x in dict_geo.keys()])/len(dict_geo)
+    else:
+        dist = sum(
+            [sum(dict_geo[x])/len(dict_geo[x])
+             for x in dict_geo.keys()])/len(dict_geo)
     return dist
 
 
@@ -340,7 +357,6 @@ def _cal_geodesic_dist(G,
 
 def _pairwise_geodesic_dist(ad_input,
                             G,
-                            mat_clust_clone,
                             use_weight=False,
                             weight_time=None,
                             n_jobs=1):
@@ -353,6 +369,8 @@ def _pairwise_geodesic_dist(ad_input,
 
     anno_time = ad_input.uns['params']['anno_time']
     df_time = ad_input.obs[anno_time]
+    mat_clust_clone = ad_input.uns['cluster_clone']
+    mat_clust_pdist = ad_input.uns['cluster_pdist']
 
     time_sorted = np.unique(ad_input.obs[anno_time])
     dict_time = {x: i+1 for i, x in enumerate(time_sorted)}
@@ -372,7 +390,9 @@ def _pairwise_geodesic_dist(ad_input,
     # construct a dictionary of the converted time points
     dict_time_w_conv = {dict_time[x]: dict_time_w[x] for x in dict_time.keys()}
     list_ij = list(itertools.combinations(np.arange(ad_input.shape[1]), 2))
-    list_param = [(G, mat_clust_clone,
+    list_param = [(G,
+                   mat_clust_clone,
+                   mat_clust_pdist,
                    use_weight, dict_time_w_conv,
                    i, j) for i, j in list_ij]
     with multiprocessing.Pool(processes=n_jobs) as pool:

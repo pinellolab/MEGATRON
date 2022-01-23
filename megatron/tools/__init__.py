@@ -12,9 +12,9 @@ from ._general import (
 )
 from ._umap import umap
 
-# from ._geodesic import (
-#     _average_geodesic,
-#     _build_graph,
-#     _cal_geodesic_dist,
-#     _pairwise_geodesic_dist
-# )
+from ._geodesic import (
+    _average_geodesic,
+    _build_graph,
+    _cal_geodesic_dist,
+    _pairwise_geodesic_dist
+)
