@@ -39,14 +39,12 @@ def _average_geodesic(ad_input,
         from Scipy.
     """
 
-    if use_weight:
-        if weight_time is not None:
-            assert isinstance(weight_time, dict), "`weight_time` must be dict"
-            anno_time = ad_input.uns['params']['anno_time']
-            if not (set(ad_input.obs[anno_time]) == set(weight_time.keys())):
-                raise ValueError("keys in `weight_time` "
-                                 "do not match time annotation")
-
+    if use_weight and weight_time is not None:
+        assert isinstance(weight_time, dict), "`weight_time` must be dict"
+        anno_time = ad_input.uns['params']['anno_time']
+        if not (set(ad_input.obs[anno_time]) == set(weight_time.keys())):
+            raise ValueError("keys in `weight_time` "
+                             "do not match time annotation")
     G = _build_graph(ad_input,
                      n_clusters=n_clusters,
                      clustering=clustering,
@@ -211,7 +209,6 @@ def _build_graph(ad_input,
 #             G.add_edges_from(tree_i_t.to_undirected().edges(data=True))
 #     return G
 
-
 def _cal_geodesic_dist(G,
                        mat_clust_clone,
                        mat_clust_pdist,
@@ -229,7 +226,9 @@ def _cal_geodesic_dist(G,
     mat_time_dist_ij = cdist(mat_time_i.reshape(-1, 1),
                              mat_time_j.reshape(-1, 1),
                              metric='cityblock')
-    # for each timepoint, calculate the distances between nodes of two clones
+
+    # for each timepoint, calculate the geodesic distances
+    # between nodes of two clones
     dict_geo = {}
     for ii in range(mat_time_dist_ij.shape[0]):
         # find nodes of the nearest timepoints in the other clone
@@ -261,6 +260,7 @@ def _cal_geodesic_dist(G,
             dict_geo[mat_time_j[jj]].append(dist_jj)
 
     # remove the confounding factor #nodes(clusters) and #timepoints
+    # calculate the average distance
     if use_weight:
         dist = sum(
             [dict_time_w_conv[x]*sum(dict_geo[x])/len(dict_geo[x])
@@ -384,9 +384,9 @@ def _pairwise_geodesic_dist(ad_input,
                            for x in time_sorted}
         else:
             dict_time_w = weight_time.copy()
+        print(f"The weights of {anno_time} are {dict_time_w}")
     else:
         dict_time_w = {x: 1 for x in time_sorted}
-    print(f"The weights of {anno_time} are {dict_time_w}")
     # construct a dictionary of the converted time points
     dict_time_w_conv = {dict_time[x]: dict_time_w[x] for x in dict_time.keys()}
     list_ij = list(itertools.combinations(np.arange(ad_input.shape[1]), 2))
