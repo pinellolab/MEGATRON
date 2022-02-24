@@ -12,6 +12,10 @@ from pandas.api.types import (
     is_string_dtype,
     is_categorical_dtype,
 )
+from scipy.cluster.hierarchy import (
+    dendrogram,
+    linkage
+)
 import plotly.express as px
 # import plotly.graph_objects as go
 
@@ -1575,3 +1579,37 @@ def clones(
                                  **kwargs)
     if copy:
         return list_ax
+
+
+def clone_dendrogram(
+    adata,
+    color_threshold=None,
+    no_labels=True,
+    fig_size=(12, 4),
+    save_fig=None,
+    fig_path=None,
+    fig_name='clone_dendrogram.pdf',
+    **kwargs
+):
+    if save_fig is None:
+        save_fig = settings.save_fig
+    if fig_path is None:
+        fig_path = os.path.join(settings.workdir, 'figures')
+    Z = linkage(
+        adata.uns['clone']['distance'],
+        'ward')
+    fig = plt.figure(figsize=fig_size)
+    _ = dendrogram(
+        Z,
+        color_threshold=color_threshold,
+        no_labels=no_labels,
+        **kwargs)
+    if color_threshold is not None:
+        plt.axhline(y=color_threshold, c='#7A1A3A')
+    if save_fig:
+        if(not os.path.exists(fig_path)):
+            os.makedirs(fig_path)
+        fig.savefig(os.path.join(fig_path, fig_name),
+                    pad_inches=1,
+                    bbox_inches='tight')
+        plt.close(fig)
