@@ -10,5 +10,6 @@ from ._plot import (
     clone_scatter,
     clone_traj_scatter,
     scatter,
-    scatter_3d
+    scatter_3d,
+    clone
 )
