@@ -1063,24 +1063,25 @@ def _scatterplot2d_clone(adata,
         plt.close(fig)
 
 
-def clone_cluster(adata,
-                  group,
-                  obsm=None,
-                  layer=None,
-                  comp1=0,
-                  comp2=1,
-                  show_contour=True,
-                  fig_size=(4, 4),
-                  fig_ncol=3,
-                  alpha=0.8,
-                  pad=1.08,
-                  w_pad=None,
-                  h_pad=None,
-                  save_fig=None,
-                  fig_path=None,
-                  fig_name='clone_scatter.pdf',
-                  **kwargs,
-                  ):
+def clone_clusters(
+    adata,
+    group,
+    obsm=None,
+    layer=None,
+    comp1=0,
+    comp2=1,
+    show_contour=True,
+    fig_size=(4, 4),
+    fig_ncol=3,
+    alpha=0.8,
+    pad=1.08,
+    w_pad=None,
+    h_pad=None,
+    save_fig=None,
+    fig_path=None,
+    fig_name='clone_scatter.pdf',
+    **kwargs,
+):
     """ Scatter plot for clone clusters
     """
     _scatterplot2d_clone(adata,
@@ -1102,6 +1103,7 @@ def clone_cluster(adata,
                          fig_name=fig_name,
                          **kwargs
                          )
+
 
 def scatter(adata,
             color=None,

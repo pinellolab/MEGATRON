@@ -71,7 +71,7 @@ def normalize(adata, method='lib_size', scale_factor=1e4, save_raw=True):
         adata.X = cal_tf_idf(adata.X)
 
 
-def add_clone(
+def add_clones(
     adata,
     mat,
     anno=None

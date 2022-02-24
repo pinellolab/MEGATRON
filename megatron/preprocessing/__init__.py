@@ -4,7 +4,7 @@ from ._general import (
     log_transform,
     normalize,
     binarize,
-    add_clone,
+    add_clones,
 )
 from ._qc import (
     cal_qc,

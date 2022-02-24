@@ -7,7 +7,7 @@ from ._plot import (
     violin,
     hist,
     umap,
-    clone_cluster,
+    clone_clusters,
     scatter,
     scatter_3d,
     clones
