@@ -1605,7 +1605,7 @@ def clone_dendrogram(
         no_labels=no_labels,
         **kwargs)
     print("The estimated number of clusters is "
-          f"{np.unique(d['color_list']).shape[0]}")
+          f"{np.unique(d['color_list']).shape[0]-1}")
     if color_threshold is not None:
         plt.axhline(y=color_threshold, c='#7A1A3A')
     if save_fig:
