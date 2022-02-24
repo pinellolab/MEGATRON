@@ -45,24 +45,3 @@ def cluster_clones(adata,
              linkage=linkage,
              target='clone',
              **kwargs)
-
-
-def cluster_clone_traj(adata,
-                       n_clusters=2,
-                       method='hierarchical',
-                       linkage='ward',
-                       **kwargs):
-    """Cluster clone paths
-
-    Parameters
-    ----------
-
-    Returns
-    -------
-    """
-    _cluster(adata,
-             n_clusters=n_clusters,
-             method=method,
-             linkage=linkage,
-             target='clone_traj',
-             **kwargs)
