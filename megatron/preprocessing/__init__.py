@@ -5,7 +5,6 @@ from ._general import (
     normalize,
     binarize,
     add_clones,
-    add_clone_traj,
 )
 from ._qc import (
     cal_qc,
