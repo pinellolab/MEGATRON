@@ -161,69 +161,70 @@ def clone_distance(
     print(f"Finished: {(ed-st)/60} mins")
 
 
-def clone_traj_distance(
-    adata,
-    method="geodesic",
-    obsm=None,
-    layer=None,
-    anno_time="time",
-    n_jobs=1,
-    **kwargs,
-):
-    """Calculate distances between clone trajectories
+# def clone_traj_distance(
+#     adata,
+#     method="geodesic",
+#     obsm=None,
+#     layer=None,
+#     anno_time="time",
+#     n_jobs=1,
+#     **kwargs,
+# ):
+#     """Calculate distances between clone trajectories
 
-    Parameters
-    ----------
-    adata: `AnnData`
-        Anndata object.
-    method: `str`, (default: 'directed_graph');
-        Method used to calculate clonal distances.
-        Possible methods:
-        - 'geodesic': graph-based geodesic distance
-        - 'directed_graph': shortest-path-based directed graph
-        - 'mnn':
-        - 'wasserstein':
-        - 'centroid'
-    layer: `str`, optional (default: None)
-        The layer used to perform UMAP
-    obsm: `str`, optional (default: None)
-        The multi-dimensional annotation of observations used to perform UMAP
-    time: `str`, optional (default: 'time')
-        Column name of observations (adata.obs) indicating temporal information
-    n_jobs: `int`, optional (default: 1)
-        The number of parallel jobs to run
-    **kwargs:
-        Additional arguments to each method
-        - 'geodesic':
-            use_weight: `bool`, optional (default: False)
-                Use weights for time annotation
-                Only valid when 'geodesic' is used.
-            weight_time: `dict`, optional (default: None)
-                a dictionary of weights for time annotation
-                Only valid when 'geodesic' is used.
+#     Parameters
+#     ----------
+#     adata: `AnnData`
+#         Anndata object.
+#     method: `str`, (default: 'directed_graph');
+#         Method used to calculate clonal distances.
+#         Possible methods:
+#         - 'geodesic': graph-based geodesic distance
+#         - 'directed_graph': shortest-path-based directed graph
+#         - 'mnn':
+#         - 'wasserstein':
+#         - 'centroid'
+#     layer: `str`, optional (default: None)
+#         The layer used to perform UMAP
+#     obsm: `str`, optional (default: None)
+#         The multi-dimensional annotation of observations used to perform UMAP
+#     time: `str`, optional (default: 'time')
+#         Column name of observations (adata.obs)
+#         indicating temporal information
+#     n_jobs: `int`, optional (default: 1)
+#         The number of parallel jobs to run
+#     **kwargs:
+#         Additional arguments to each method
+#         - 'geodesic':
+#             use_weight: `bool`, optional (default: False)
+#                 Use weights for time annotation
+#                 Only valid when 'geodesic' is used.
+#             weight_time: `dict`, optional (default: None)
+#                 a dictionary of weights for time annotation
+#                 Only valid when 'geodesic' is used.
 
-    Returns
-    -------
-    updates `adata.uns['clone_traj']` with the following field.
-    distance: `sparse matrix`` (`.uns['clone_traj']['distance']`)
-        A condensed clone distance matrix.
-        It can be converted into a redundant square matrix using `squareform`
-        from Scipy.
-    """
+#     Returns
+#     -------
+#     updates `adata.uns['clone_traj']` with the following field.
+#     distance: `sparse matrix`` (`.uns['clone_traj']['distance']`)
+#         A condensed clone distance matrix.
+#         It can be converted into a redundant square matrix using `squareform`
+#         from Scipy.
+#     """
 
-    st = time.time()
-    _dist(
-        adata,
-        target="clone_traj",
-        method=method,
-        obsm=obsm,
-        layer=layer,
-        anno_time=anno_time,
-        n_jobs=n_jobs,
-        **kwargs,
-    )
-    ed = time.time()
-    print(f"Finished: {(ed-st)/60} mins")
+#     st = time.time()
+#     _dist(
+#         adata,
+#         target="clone_traj",
+#         method=method,
+#         obsm=obsm,
+#         layer=layer,
+#         anno_time=anno_time,
+#         n_jobs=n_jobs,
+#         **kwargs,
+#     )
+#     ed = time.time()
+#     print(f"Finished: {(ed-st)/60} mins")
 
 
 def set_clone_distance(adata, method="directed_graph"):
