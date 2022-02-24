@@ -18,7 +18,7 @@ def _dist(
     method="geodesic",
     obsm=None,
     layer=None,
-    anno_time="time",
+    anno_time=None,
     n_jobs=1,
     **kwargs,
 ):
@@ -41,10 +41,18 @@ def _dist(
     else:
         mat_coord = adata.X
 
-    if anno_time in adata.obs_keys():
-        df_time = adata.obs[anno_time].copy()
+    if anno_time is None:
+        anno_time = 'unknown'
+        df_time = pd.DataFrame(
+            data=0,
+            index=adata.obs_names,
+            columns=[anno_time])
     else:
-        raise ValueError(f"could not find {anno_time} in `adata.obs_keys()`")
+        if anno_time in adata.obs_keys():
+            df_time = adata.obs[anno_time].copy()
+        else:
+            raise ValueError(
+                f"could not find {anno_time} in `adata.obs_keys()`")
     mat_clone = adata.obsm[f"X_{target}"]
 
     ad_input = ad.AnnData(
@@ -101,7 +109,7 @@ def clone_distance(
     method="geodesic",
     obsm=None,
     layer=None,
-    anno_time="time",
+    anno_time=None,
     n_jobs=1,
     **kwargs,
 ):
