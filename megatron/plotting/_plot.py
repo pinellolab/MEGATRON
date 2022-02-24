@@ -1103,48 +1103,6 @@ def clone_scatter(adata,
                          **kwargs
                          )
 
-
-def clone_traj_scatter(adata,
-                       group,
-                       obsm=None,
-                       layer=None,
-                       comp1=0,
-                       comp2=1,
-                       show_contour=True,
-                       fig_size=(4, 4),
-                       fig_ncol=3,
-                       alpha=0.8,
-                       pad=1.08,
-                       w_pad=None,
-                       h_pad=None,
-                       save_fig=None,
-                       fig_path=None,
-                       fig_name='clone_scatter.pdf',
-                       **kwargs,
-                       ):
-    """ Scatter plot for clone trajectory clusters
-    """
-    _scatterplot2d_clone(adata,
-                         group,
-                         target='clone_traj',
-                         obsm=obsm,
-                         layer=layer,
-                         comp1=comp1,
-                         comp2=comp2,
-                         show_contour=show_contour,
-                         fig_size=fig_size,
-                         fig_ncol=fig_ncol,
-                         alpha=alpha,
-                         pad=pad,
-                         w_pad=w_pad,
-                         h_pad=h_pad,
-                         save_fig=save_fig,
-                         fig_path=fig_path,
-                         fig_name=fig_name,
-                         **kwargs
-                         )
-
-
 def scatter(adata,
             color=None,
             obsm='X_umap',
