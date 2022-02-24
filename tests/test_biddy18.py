@@ -82,9 +82,15 @@ def test_cluster_clones_biddy18(adata, mat_clone, tmp_path):
         adata,
         n_clusters=3,
         method='hierarchical')
-    me.pl.clone_traj_scatter(adata,
-                             group='hierarchical',
-                             obsm='X_tsne_paper',
-                             show_contour=True,
-                             levels=6,
-                             thresh=0.1)
+    me.pl.clone_clusters(
+        adata,
+        group='hierarchical',
+        obsm='X_tsne_paper',
+        show_contour=True,
+        levels=6,
+        thresh=0.1)
+    me.pl.clones(
+        adata,
+        ids=['1', '2'],
+        obsm='X_tsne_paper',
+        show_contour=False)
