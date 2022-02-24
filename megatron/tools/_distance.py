@@ -255,29 +255,29 @@ def set_clone_distance(adata, method="directed_graph"):
     _set_dist(adata, target="clone", method=method)
 
 
-def set_clone_traj_distance(adata, method="directed_graph"):
-    """Set the current distance matrix to the one calculated
-    by the specified method
+# def set_clone_traj_distance(adata, method="directed_graph"):
+#     """Set the current distance matrix to the one calculated
+#     by the specified method
 
-    Parameters
-    ----------
-    adata: `AnnData`
-        Anndata object.
-    method: `str`, (default: 'directed_graph');
-        Method used to calculate clonal distances.
-        Possible methods:
-        - 'geodesic': graph-based geodesic distance
-        - 'directed_graph': shortest-path-based directed graph
-        - 'mnn':
-        - 'wasserstein':
-        - 'centroid'
+#     Parameters
+#     ----------
+#     adata: `AnnData`
+#         Anndata object.
+#     method: `str`, (default: 'directed_graph');
+#         Method used to calculate clonal distances.
+#         Possible methods:
+#         - 'geodesic': graph-based geodesic distance
+#         - 'directed_graph': shortest-path-based directed graph
+#         - 'mnn':
+#         - 'wasserstein':
+#         - 'centroid'
 
-    Returns
-    -------
-    updates `adata.uns['clone_traj']` with the following field.
-    distance: `sparse matrix`` (`.uns['clone_traj']['distance']`)
-        A condensed clone distance matrix.
-        It can be converted into a redundant square matrix using `squareform`
-        from Scipy.
-    """
-    _set_dist(adata, target="clone_traj", method=method)
+#     Returns
+#     -------
+#     updates `adata.uns['clone_traj']` with the following field.
+#     distance: `sparse matrix`` (`.uns['clone_traj']['distance']`)
+#         A condensed clone distance matrix.
+#         It can be converted into a redundant square matrix using `squareform`
+#         from Scipy.
+#     """
+#     _set_dist(adata, target="clone_traj", method=method)
