@@ -402,6 +402,7 @@ def variable_genes(adata,
 def _scatterplot2d(df,
                    x,
                    y,
+                   df_bg=None,
                    list_hue=None,
                    hue_palette=None,
                    drawing_order='sorted',
@@ -410,6 +411,12 @@ def _scatterplot2d(df,
                    show_texts=False,
                    texts=None,
                    text_size=10,
+                   show_contour=False,
+                   contour_levels=5,
+                   show_bg=False,
+                   bg_size=5,
+                   bg_alpha=0.2,
+                   bg_color='gray',
                    fig_size=None,
                    fig_ncol=3,
                    fig_legend_ncol=1,
@@ -516,6 +523,16 @@ def _scatterplot2d(df,
     fig = plt.figure(figsize=(fig_size[0]*fig_ncol*1.05, fig_size[1]*fig_nrow))
     for i, hue in enumerate(list_hue):
         ax_i = fig.add_subplot(fig_nrow, fig_ncol, i+1)
+        if show_bg:
+            if df_bg is not None:
+                sns.scatterplot(ax=ax_i,
+                                x=x,
+                                y=y,
+                                color=bg_color,
+                                data=df_bg,
+                                alpha=bg_alpha,
+                                linewidth=0,
+                                s=bg_size)
         if hue is None:
             sc_i = sns.scatterplot(ax=ax_i,
                                    x=x,
@@ -596,6 +613,15 @@ def _scatterplot2d(df,
                              for t in texts]
                 adjust_text(plt_texts,
                             arrowprops=dict(arrowstyle='->', color='black'))
+        if show_contour:
+            sns.kdeplot(ax=ax_i,
+                        data=df,
+                        x=x,
+                        y=y,
+                        alpha=0.9,
+                        color='black',
+                        levels=contour_levels,
+                        **kwargs)
         ax_i.set_xlabel(x)
         ax_i.set_ylabel(y)
         ax_i.locator_params(axis='x', nbins=5)
@@ -737,7 +763,6 @@ def _scatterplot2d_plotly(df,
         fig.show(renderer="notebook")
 
 
-# TO-DO add 3D plot
 def umap(adata,
          color=None,
          dict_palette=None,
@@ -1419,3 +1444,173 @@ def scatter_3d(adata,
                               height=height,
                               scene=dict(aspectmode='cube'))
             fig.show(renderer="notebook")
+
+
+def clone(adata,
+          ids=None,
+          color=None,
+          obsm=None,
+          layer=None,
+          comp1=0,
+          comp2=1,
+          dict_palette=None,
+          size=50,
+          bg_size=5,
+          drawing_order='sorted',
+          dict_drawing_order=None,
+          show_texts=False,
+          texts=None,
+          text_size=10,
+          show_contour=False,
+          contour_levels=5,
+          fig_size=None,
+          fig_ncol=3,
+          fig_legend_ncol=1,
+          fig_legend_order=None,
+          vmin=None,
+          vmax=None,
+          alpha=1,
+          pad=1.08,
+          bg_alpha=0.2,
+          bg_color='gray',
+          w_pad=None,
+          h_pad=None,
+          save_fig=None,
+          fig_path=None,
+          fig_name='clone.pdf',
+          copy=False,
+          **kwargs,
+          ):
+    """ Scatter plot for specified clones
+    """
+    if fig_size is None:
+        fig_size = mpl.rcParams['figure.figsize']
+    if save_fig is None:
+        save_fig = settings.save_fig
+    if fig_path is None:
+        fig_path = os.path.join(settings.workdir, 'figures')
+    if dict_palette is None:
+        dict_palette = dict()
+
+    if(sum(list(map(lambda x: x is not None,
+                    [layer, obsm]))) == 2):
+        raise ValueError("Only one of `layer` and `obsm` can be used")
+    elif obsm is not None:
+        if obsm in adata.obsm_keys():
+            mat_coord = adata.obsm[obsm]
+        else:
+            raise ValueError(
+                f'could not find {obsm} in `adata.obsm_keys()`')
+    elif layer is not None:
+        if layer in adata.layers.keys():
+            mat_coord = adata.layers[layer]
+        else:
+            raise ValueError(
+                f'could not find {layer} in `adata.layers.keys()`')
+    else:
+        mat_coord = adata.X.A
+
+    ind_clones = np.where(
+        np.isin(adata.uns['clone']['anno'].index, ids))[0]
+    ind_cells = np.where(
+        adata.obsm['X_clone'][:, ind_clones].sum(axis=1) > 0)[0]
+
+    df_plot = pd.DataFrame(index=adata.obs.index,
+                           data=mat_coord[:, [comp1, comp2]],
+                           columns=[f'Dim{comp1+1}', f'Dim{comp2+1}'])
+    df_plot['selected'] = False
+    df_plot.iloc[ind_cells, 2] = True
+
+    if color is None:
+        list_ax = _scatterplot2d(df_plot[df_plot['selected']],
+                                 x=f'Dim{comp1+1}',
+                                 y=f'Dim{comp2+1}',
+                                 show_bg=True,
+                                 df_bg=df_plot,
+                                 bg_alpha=bg_alpha,
+                                 bg_color=bg_color,
+                                 bg_size=bg_size,
+                                 drawing_order=drawing_order,
+                                 size=size,
+                                 show_texts=show_texts,
+                                 text_size=text_size,
+                                 texts=texts,
+                                 show_contour=show_contour,
+                                 contour_levels=contour_levels,
+                                 fig_size=fig_size,
+                                 alpha=alpha,
+                                 pad=pad,
+                                 w_pad=w_pad,
+                                 h_pad=h_pad,
+                                 save_fig=save_fig,
+                                 fig_path=fig_path,
+                                 fig_name=fig_name,
+                                 copy=copy,
+                                 **kwargs)
+    else:
+        color = list(dict.fromkeys(color))  # remove duplicate keys
+        for ann in color:
+            if(ann in adata.obs_keys()):
+                df_plot[ann] = adata.obs[ann]
+                if(not is_numeric_dtype(df_plot[ann])):
+                    if 'color' not in adata.uns_keys():
+                        adata.uns['color'] = dict()
+
+                    if ann not in dict_palette.keys():
+                        if (ann+'_color' in adata.uns['color'].keys()) \
+                            and \
+                            (all(np.isin(np.unique(df_plot[ann]),
+                                         list(adata.uns['color']
+                                         [ann+'_color'].keys())))):
+                            dict_palette[ann] = \
+                                adata.uns['color'][ann+'_color']
+                        else:
+                            dict_palette[ann] = \
+                                generate_palette(adata.obs[ann])
+                            adata.uns['color'][ann+'_color'] = \
+                                dict_palette[ann].copy()
+                    else:
+                        if ann+'_color' not in adata.uns['color'].keys():
+                            adata.uns['color'][ann+'_color'] = \
+                                dict_palette[ann].copy()
+
+            elif(ann in adata.var_names):
+                df_plot[ann] = adata.obs_vector(ann)
+            else:
+                raise ValueError(f"could not find {ann} in `adata.obs.columns`"
+                                 " and `adata.var_names`")
+        list_ax = _scatterplot2d(df_plot[df_plot['selected']],
+                                 x=f'Dim{comp1+1}',
+                                 y=f'Dim{comp2+1}',
+                                 show_bg=True,
+                                 df_bg=df_plot,
+                                 bg_alpha=bg_alpha,
+                                 bg_color=bg_color,
+                                 bg_size=bg_size,
+                                 list_hue=color,
+                                 hue_palette=dict_palette,
+                                 drawing_order=drawing_order,
+                                 dict_drawing_order=dict_drawing_order,
+                                 size=size,
+                                 show_texts=show_texts,
+                                 text_size=text_size,
+                                 texts=texts,
+                                 show_contour=show_contour,
+                                 contour_levels=contour_levels,
+                                 fig_size=fig_size,
+                                 fig_ncol=fig_ncol,
+                                 fig_legend_ncol=fig_legend_ncol,
+                                 fig_legend_order=fig_legend_order,
+                                 vmin=vmin,
+                                 vmax=vmax,
+                                 alpha=alpha,
+                                 pad=pad,
+                                 w_pad=w_pad,
+                                 h_pad=h_pad,
+                                 save_fig=save_fig,
+                                 fig_path=fig_path,
+                                 fig_name=fig_name,
+                                 copy=copy,
+                                 **kwargs)
+    if copy:
+        return list_ax
