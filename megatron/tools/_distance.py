@@ -80,10 +80,10 @@ def _dist(
     adata.uns[target]["distance"] = mat_dist
 
 
-def _set_dist(adata, target="clone", method="directed_graph"):
+def _set_dist(adata, target="clone", method="geodesic"):
     """Choose from calculated distance and set it to the current distance"""
     assert method in [
-        "directed_graph",
+        "geodesic",
         "mnn",
         "wasserstein",
         "sinkhorn",
