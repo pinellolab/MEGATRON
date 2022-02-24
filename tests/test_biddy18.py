@@ -10,19 +10,19 @@ def adata():
 
 
 @pytest.fixture
-def mat_clone_traj():
+def mat_clone():
     return load_npz(
         "tests/data/clone_traj_biddy18.npz")
 
 
-def test_cluster_clones_biddy18(adata, mat_clone_traj, tmp_path):
+def test_cluster_clones_biddy18(adata, mat_clone, tmp_path):
     me.settings.set_workdir(tmp_path / "result_biddy18")
     me.settings.set_figure_params(dpi=80,
                                   style='white',
                                   fig_size=[5, 5],
                                   rc={'image.cmap': 'viridis'})
-    me.pp.add_clone_traj(adata,
-                         mat=mat_clone_traj)
+    me.pp.add_clones(adata,
+                     mat=mat_clone)
     me.pp.filter_cells_rna(adata, min_n_genes=5)
     me.pp.filter_genes(adata, min_n_cells=2)
     me.pp.cal_qc_rna(adata)
@@ -45,38 +45,43 @@ def test_cluster_clones_biddy18(adata, mat_clone_traj, tmp_path):
     me.pl.umap(adata,
                color=['Timepoint', 'Cluster.Seurat', 'n_genes'],
                drawing_order='random')
-    me.pp.filter_clone_traj(adata, min_cells=1)
-    me.tl.clone_traj_distance(adata,
-                              method='geodesic',
-                              obsm='X_tsne_paper',
-                              layer=None,
-                              anno_time='Day')
-    me.tl.clone_traj_distance(adata,
-                              method='mnn',
-                              obsm='X_tsne_paper',
-                              layer=None,
-                              anno_time='Day')
-    me.tl.clone_traj_distance(adata,
-                              method='wasserstein',
-                              obsm='X_tsne_paper',
-                              layer=None,
-                              anno_time='Day')
+    me.pp.filter_clones(adata, min_cells=1)
+    me.tl.clone_distance(
+        adata,
+        method='geodesic',
+        obsm='X_tsne_paper',
+        layer=None,
+        anno_time='Day')
+    me.tl.clone_distance(
+        adata,
+        method='mnn',
+        obsm='X_tsne_paper',
+        layer=None,
+        anno_time='Day')
+    me.tl.clone_distance(
+        adata,
+        method='wasserstein',
+        obsm='X_tsne_paper',
+        layer=None,
+        anno_time='Day')
 
-    adata.uns['clone_traj']['distance'] = \
-        adata.uns['clone_traj']['distance_geodesic'].copy()
-    me.tl.cluster_clone_traj(adata,
-                             n_clusters=3,
-                             method='hierarchical')
-    adata.uns['clone_traj']['distance'] = \
-        adata.uns['clone_traj']['distance_mnn'].copy()
-    me.tl.cluster_clone_traj(adata,
-                             n_clusters=3,
-                             method='hierarchical')
-    adata.uns['clone_traj']['distance'] = \
-        adata.uns['clone_traj']['distance_wasserstein'].copy()
-    me.tl.cluster_clone_traj(adata,
-                             n_clusters=3,
-                             method='hierarchical')
+    me.tl.set_clone_distance(adata, method="geodesic")
+    me.tl.cluster_clones(
+        adata,
+        n_clusters=3,
+        method='hierarchical')
+
+    me.tl.set_clone_distance(adata, method="mnn")
+    me.tl.cluster_clones(
+        adata,
+        n_clusters=3,
+        method='hierarchical')
+
+    me.tl.set_clone_distance(adata, method="wasserstein")
+    me.tl.cluster_clones(
+        adata,
+        n_clusters=3,
+        method='hierarchical')
     me.pl.clone_traj_scatter(adata,
                              group='hierarchical',
                              obsm='X_tsne_paper',
