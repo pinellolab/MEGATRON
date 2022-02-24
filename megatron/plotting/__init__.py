@@ -8,6 +8,7 @@ from ._plot import (
     hist,
     umap,
     clone_clusters,
+    clone_dendrogram,
     scatter,
     scatter_3d,
     clones
