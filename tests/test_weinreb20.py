@@ -68,24 +68,30 @@ def test_cluster_clones_weinreb20(adata, mat_clones, tmp_path):
                          obsm='X_SPRING',
                          layer=None,
                          anno_time='Time point')
-    adata.uns['clone']['distance'] = \
-        adata.uns['clone']['distance_geodesic'].copy()
+
+    me.tl.set_clone_distance(adata, method="geodesic")
     me.tl.cluster_clones(adata,
                          n_clusters=3,
                          method='hierarchical')
-    adata.uns['clone']['distance'] = \
-        adata.uns['clone']['distance_mnn'].copy()
+
+    me.tl.set_clone_distance(adata, method="mnn")
     me.tl.cluster_clones(adata,
                          n_clusters=3,
                          method='hierarchical')
-    adata.uns['clone']['distance'] = \
-        adata.uns['clone']['distance_wasserstein'].copy()
+
+    me.tl.set_clone_distance(adata, method="wasserstein")
     me.tl.cluster_clones(adata,
                          n_clusters=3,
                          method='hierarchical')
-    me.pl.clone_scatter(adata,
-                        group='hierarchical',
-                        obsm='X_SPRING',
-                        show_contour=True,
-                        levels=6,
-                        thresh=0.1)
+    me.pl.clone_clusters(
+        adata,
+        group='hierarchical',
+        obsm='X_SPRING',
+        show_contour=True,
+        levels=6,
+        thresh=0.1)
+    me.pl.clones(
+        adata,
+        ids=['1', '2'],
+        obsm='X_SPRING',
+        show_contour=False)

@@ -18,7 +18,7 @@ def _dist(
     method="geodesic",
     obsm=None,
     layer=None,
-    anno_time="time",
+    anno_time=None,
     n_jobs=1,
     **kwargs,
 ):
@@ -41,10 +41,18 @@ def _dist(
     else:
         mat_coord = adata.X
 
-    if anno_time in adata.obs_keys():
-        df_time = adata.obs[anno_time].copy()
+    if anno_time is None:
+        anno_time = 'unknown'
+        df_time = pd.DataFrame(
+            data=0,
+            index=adata.obs_names,
+            columns=[anno_time])
     else:
-        raise ValueError(f"could not find {anno_time} in `adata.obs_keys()`")
+        if anno_time in adata.obs_keys():
+            df_time = adata.obs[anno_time].copy()
+        else:
+            raise ValueError(
+                f"could not find {anno_time} in `adata.obs_keys()`")
     mat_clone = adata.obsm[f"X_{target}"]
 
     ad_input = ad.AnnData(
@@ -80,10 +88,10 @@ def _dist(
     adata.uns[target]["distance"] = mat_dist
 
 
-def _set_dist(adata, target="clone", method="directed_graph"):
+def _set_dist(adata, target="clone", method="geodesic"):
     """Choose from calculated distance and set it to the current distance"""
     assert method in [
-        "directed_graph",
+        "geodesic",
         "mnn",
         "wasserstein",
         "sinkhorn",
@@ -101,7 +109,7 @@ def clone_distance(
     method="geodesic",
     obsm=None,
     layer=None,
-    anno_time="time",
+    anno_time=None,
     n_jobs=1,
     **kwargs,
 ):
@@ -161,71 +169,6 @@ def clone_distance(
     print(f"Finished: {(ed-st)/60} mins")
 
 
-def clone_traj_distance(
-    adata,
-    method="geodesic",
-    obsm=None,
-    layer=None,
-    anno_time="time",
-    n_jobs=1,
-    **kwargs,
-):
-    """Calculate distances between clone trajectories
-
-    Parameters
-    ----------
-    adata: `AnnData`
-        Anndata object.
-    method: `str`, (default: 'directed_graph');
-        Method used to calculate clonal distances.
-        Possible methods:
-        - 'geodesic': graph-based geodesic distance
-        - 'directed_graph': shortest-path-based directed graph
-        - 'mnn':
-        - 'wasserstein':
-        - 'centroid'
-    layer: `str`, optional (default: None)
-        The layer used to perform UMAP
-    obsm: `str`, optional (default: None)
-        The multi-dimensional annotation of observations used to perform UMAP
-    time: `str`, optional (default: 'time')
-        Column name of observations (adata.obs) indicating temporal information
-    n_jobs: `int`, optional (default: 1)
-        The number of parallel jobs to run
-    **kwargs:
-        Additional arguments to each method
-        - 'geodesic':
-            use_weight: `bool`, optional (default: False)
-                Use weights for time annotation
-                Only valid when 'geodesic' is used.
-            weight_time: `dict`, optional (default: None)
-                a dictionary of weights for time annotation
-                Only valid when 'geodesic' is used.
-
-    Returns
-    -------
-    updates `adata.uns['clone_traj']` with the following field.
-    distance: `sparse matrix`` (`.uns['clone_traj']['distance']`)
-        A condensed clone distance matrix.
-        It can be converted into a redundant square matrix using `squareform`
-        from Scipy.
-    """
-
-    st = time.time()
-    _dist(
-        adata,
-        target="clone_traj",
-        method=method,
-        obsm=obsm,
-        layer=layer,
-        anno_time=anno_time,
-        n_jobs=n_jobs,
-        **kwargs,
-    )
-    ed = time.time()
-    print(f"Finished: {(ed-st)/60} mins")
-
-
 def set_clone_distance(adata, method="directed_graph"):
     """Set the current distance matrix to the one calculated
     by the specified method
@@ -252,31 +195,3 @@ def set_clone_distance(adata, method="directed_graph"):
         from Scipy.
     """
     _set_dist(adata, target="clone", method=method)
-
-
-def set_clone_traj_distance(adata, method="directed_graph"):
-    """Set the current distance matrix to the one calculated
-    by the specified method
-
-    Parameters
-    ----------
-    adata: `AnnData`
-        Anndata object.
-    method: `str`, (default: 'directed_graph');
-        Method used to calculate clonal distances.
-        Possible methods:
-        - 'geodesic': graph-based geodesic distance
-        - 'directed_graph': shortest-path-based directed graph
-        - 'mnn':
-        - 'wasserstein':
-        - 'centroid'
-
-    Returns
-    -------
-    updates `adata.uns['clone_traj']` with the following field.
-    distance: `sparse matrix`` (`.uns['clone_traj']['distance']`)
-        A condensed clone distance matrix.
-        It can be converted into a redundant square matrix using `squareform`
-        from Scipy.
-    """
-    _set_dist(adata, target="clone_traj", method=method)
