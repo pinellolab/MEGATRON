@@ -1063,7 +1063,7 @@ def _scatterplot2d_clone(adata,
         plt.close(fig)
 
 
-def clone_scatter(adata,
+def clone_cluster(adata,
                   group,
                   obsm=None,
                   layer=None,
