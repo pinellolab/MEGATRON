@@ -1599,13 +1599,11 @@ def clone_dendrogram(
         adata.uns['clone']['distance'],
         'ward')
     fig = plt.figure(figsize=fig_size)
-    d = dendrogram(
+    _ = dendrogram(
         Z,
         color_threshold=color_threshold,
         no_labels=no_labels,
         **kwargs)
-    print("The estimated number of clusters is "
-          f"{np.unique(d['color_list']).shape[0]-1}")
     if color_threshold is not None:
         plt.axhline(y=color_threshold, c='#7A1A3A')
     if save_fig:
