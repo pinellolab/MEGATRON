@@ -6,6 +6,7 @@ from ._distance import (
 )
 from ._general import (
     cluster_clones,
+    subset_clones
 )
 from ._umap import umap
 
