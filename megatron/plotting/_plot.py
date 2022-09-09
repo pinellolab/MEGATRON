@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import networkx as nx
 from pandas.core.dtypes.common import is_numeric_dtype
 import seaborn as sns
 from adjustText import adjust_text
@@ -24,7 +25,7 @@ from .._settings import settings
 from ._utils import (
     generate_palette
 )
-
+from ..tools._geodesic import build_graph
 
 def violin(adata,
            list_obs=None,
@@ -1612,4 +1613,75 @@ def clone_dendrogram(
         fig.savefig(os.path.join(fig_path, fig_name),
                     pad_inches=1,
                     bbox_inches='tight')
-        plt.close(fig)
+        plt.close(fig)    
+
+def cluster_graph(adata,
+                  obsm=None,
+                  force=False,
+                  **kwargs):
+    if obsm is None and 'cluster_edgelist' not in adata.uns:
+        raise ValueError("Must provide an observation matrix or have already built graph with tl.build_graph")
+    if obsm is not None:
+        if obsm not in adata.obsm:
+            raise ValueError(f'{obsm} not found in adata.obsm')
+        if 'cluster_edgelist' in adata.uns and not force:
+                raise ValueError(f'graph already built, set obsm=None to use previous or set force=True to clobber')
+        print(f"Building k-NN graph based on coordinates in obsm.{obsm}")
+        build_graph(adata, obsm=obsm, **kwargs)
+    
+    G = nx.from_pandas_edgelist(adata.uns['cluster_edgelist'])
+    nx.draw(G, pos=adata.uns['cluster_pos'], with_labels=True, font_color='white')
+
+def cluster_pie_graph(adata,
+                     obsm=None,
+                     force=False,
+                     **kwargs):
+    if obsm is None and 'cluster_edgelist' not in adata.uns:
+        raise ValueError("Must provide an observation matrix or have already built graph with tl.build_graph")
+    if obsm is not None:
+        if obsm not in adata.obsm:
+            raise ValueError(f'{obsm} not found in adata.obsm')
+        if 'cluster_edgelist' in adata.uns and not force:
+                raise ValueError(f'graph already built, set obsm=None to use previous or set force=True to clobber')
+        print(f"Building k-NN graph based on coordinates in obsm.{obsm}")
+        build_graph(adata, obsm=obsm, **kwargs)
+    
+    G = nx.from_pandas_edgelist(adata.uns['cluster_edgelist'])
+
+    def _draw_pie_marker(xs, ys, ratios, sizes, colors, ax):
+
+        assert sum(ratios) <= 1+1e-6, 'sum of ratios needs to be < 1'
+
+        markers = []
+        previous = 0
+        # calculate the points of the pie pieces
+        for color, ratio in zip(colors, ratios):
+            this = 2 * np.pi * ratio + previous
+            x  = [0] + np.cos(np.linspace(previous, this, 10)).tolist() + [0]
+            y  = [0] + np.sin(np.linspace(previous, this, 10)).tolist() + [0]
+            xy = np.column_stack([x, y])
+            previous = this
+            markers.append({'marker':xy, 's':np.abs(xy).max()**2*np.array(sizes), 'facecolor':color})
+
+        # scatter each of the pie pieces to create pies
+        for marker in markers:
+            ax.scatter(xs, ys, **marker)
+
+    n_metaclones = int(adata.uns['clone']['anno'].max())
+    assigned_cells, clone_indices =  adata.obsm['X_clone'].nonzero()
+    adata.obs['metaclone'] = '0'
+    assigned_barcodes = adata.obs.iloc[assigned_cells].index
+    adata.obs.loc[assigned_barcodes, 'metaclone']=adata.uns['clone']['anno']['hierarchical'][clone_indices].values
+    adata.obs['metaclone'] = pd.Categorical(adata.obs['metaclone'], categories=[str(i) for i in range(1,n_metaclones+1)] + ["0"])
+    clust_pos = adata.uns['cluster_pos']
+
+    ax = plt.axes()
+    nx.draw_networkx_edges(G, pos=clust_pos, ax=ax)
+
+    for i in range(clust_pos.shape[0]):
+        metaclone_counts_by_cluster = adata.obs.value_counts(['cluster', 'metaclone'])
+        cts = metaclone_counts_by_cluster[i,:]
+        size = cts.sum() 
+        fracs = cts/cts.sum()
+        color_dict = {str(j+1): sns.color_palette()[j]for j in range(4)}
+        _draw_pie_marker(clust_pos[i,0],clust_pos[i,1],fracs, size, [color_dict[j] for j in cts.index], ax)

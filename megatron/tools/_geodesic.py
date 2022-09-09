@@ -38,18 +38,19 @@ def _average_geodesic(ad_input,
         It can be converted into a redundant square matrix using `squareform`
         from Scipy.
     """
-
+    
     if use_weight and weight_time is not None:
         assert isinstance(weight_time, dict), "`weight_time` must be dict"
         anno_time = ad_input.uns['params']['anno_time']
         if not (set(ad_input.obs[anno_time]) == set(weight_time.keys())):
             raise ValueError("keys in `weight_time` "
                              "do not match time annotation")
-    G = _build_graph(ad_input,
-                     n_clusters=n_clusters,
-                     clustering=clustering,
-                     k=k,
-                     metric=metric)
+    G = build_graph(ad_input,
+                    obsm='X_coord',
+                    n_clusters=n_clusters,
+                    clustering=clustering,
+                    k=k,
+                    metric=metric)
     list_dist = _pairwise_geodesic_dist(ad_input,
                                         G,
                                         n_jobs=n_jobs,
@@ -58,25 +59,40 @@ def _average_geodesic(ad_input,
     return list_dist
 
 
-def _build_graph(ad_input,
-                 n_clusters=80,
-                 clustering='kmeans',
-                 k=3,
-                 metric='euclidean'):
+def build_graph(adata,
+                obsm='X_coord',
+                n_clusters=80,
+                clustering='kmeans',
+                k=3,
+                metric='euclidean'):
     """build graph for each clone
     Parameters
     ----------
+    obsm: `str`
+        Name of matrix in adata.obsm used to construct the graph
+    ...
+    
     Returns
     -------
-    """
-    anno_time = ad_input.uns['params']['anno_time']
-    df_time = ad_input.obs[anno_time]
-    mat_clone = ad_input.X
-    mat_coord = ad_input.obsm['X_coord']
+    Updates adata with the following fields.
+    cluster: `pd.Series` (`.obs['cluster']`)
+        The k-means cluster membership for each cell
+    cluster_pos: `array-like` (`.uns['cluster_pos']`)
+        The position of each cluster center
+    cluster_pdist: `array-like` (`.uns['cluster_pdist']`)
+        Matrix of pairwise distances between each cluster center
+    cluster_edgelist: `pd.DataFrame` (`.uns['cluster_edgelist']`)
+        Pandas dataframe with list of edges + distances from kNN graph
 
-    if ad_input.shape[0] < n_clusters:
+    G: `networkx.classes.graph.Graph`
+        A  k-nearest neighbors graph
+    """
+    mat_coord = adata.obsm[obsm]
+    
+
+    if adata.shape[0] < n_clusters:
         print("The number of samples is smaller than `n_clusters`")
-        n_clusters = ad_input.shape[0]
+        n_clusters = adata.shape[0]
         print(f"`n_clusters` has been corrected to {n_clusters}")
     # clustering cells
     if clustering == 'kmeans':
@@ -86,14 +102,15 @@ def _build_graph(ad_input,
     else:
         raise ValueError(
             f'"{clustering}" is not supported yet')
-    ad_input.obs['cluster'] = clust
-    ad_input.uns['cluster_pos'] = clust_pos
+    adata.obs['cluster'] = clust
+    adata.uns['cluster_pos'] = clust_pos
     # build a connected graph of clusters
     G = nx.Graph()
     k_ = min(k, n_clusters)
 
     # Build a KNN graph
     mat_dist = squareform(pdist(clust_pos, metric=metric))
+    
     nbrs = NearestNeighbors(n_neighbors=k_,
                             metric='precomputed').fit(mat_dist)
     mat_knn = nbrs.kneighbors_graph(mat_dist, mode='distance')
@@ -106,33 +123,11 @@ def _build_graph(ad_input,
     G_mst = nx.minimum_spanning_tree(G_complete,
                                      weight='dist')
     G.add_edges_from(G_mst.to_undirected().edges(data=True))
+    G.remove_edges_from(nx.selfloop_edges(G))
 
-    # construct a cluster-by-clone matrix
-    # that stores the converted temporal info
-
-    # convert sorted time to integer values starting from 1
-    time_sorted = np.unique(df_time)
-    dict_time = {x: i+1 for i, x in enumerate(time_sorted)}
-    mat_time = np.array([dict_time[x] for x in df_time.values])
-
-    mat_clust_clone = np.zeros(shape=(n_clusters, mat_clone.shape[1]))
-    for i in range(mat_clone.shape[1]):
-        ind_i = mat_clone[:, i].nonzero()[0]  # indices of cells
-        clust_i = clust[ind_i]
-        time_i = mat_time[ind_i]
-        dict_clust_i = {}
-        for ii, ci in enumerate(clust_i):
-            if ci not in dict_clust_i.keys():
-                dict_clust_i[ci] = [time_i[ii]]
-            else:
-                dict_clust_i[ci].append(time_i[ii])
-        for x in dict_clust_i.keys():
-            mat_clust_clone[x, i] = max(set(dict_clust_i[x]),
-                                        key=dict_clust_i[x].count)
-    ad_input.uns['cluster_pdist'] = mat_dist
-    ad_input.uns['cluster_clone'] = mat_clust_clone
+    adata.uns['cluster_pdist'] = mat_dist
+    adata.uns['cluster_edgelist'] = nx.to_pandas_edgelist(G)
     return G
-
 
 # def _build_graph(ad_input,
 #                  k=3,
@@ -366,10 +361,36 @@ def _pairwise_geodesic_dist(ad_input,
     Returns
     -------
     """
+    # construct a cluster-by-clone matrix
+    # that stores the converted temporal info
 
+    # convert sorted time to integer values starting from 1
     anno_time = ad_input.uns['params']['anno_time']
     df_time = ad_input.obs[anno_time]
-    mat_clust_clone = ad_input.uns['cluster_clone']
+    time_sorted = np.unique(df_time)
+    dict_time = {x: i+1 for i, x in enumerate(time_sorted)}
+    mat_time = np.array([dict_time[x] for x in df_time.values])
+    n_clusters = len(G)
+    clust = ad_input.obs['cluster']
+    mat_clone = ad_input.X
+
+    mat_clust_clone = np.zeros(shape=(n_clusters, mat_clone.shape[1]))
+    for i in range(mat_clone.shape[1]):
+        ind_i = mat_clone[:, i].nonzero()[0]  # indices of cells
+        clust_i = clust[ind_i]
+        time_i = mat_time[ind_i]
+        dict_clust_i = {}
+        for ii, ci in enumerate(clust_i):
+            if ci not in dict_clust_i.keys():
+                dict_clust_i[ci] = [time_i[ii]]
+            else:
+                dict_clust_i[ci].append(time_i[ii])
+        for x in dict_clust_i.keys():
+            mat_clust_clone[x, i] = max(set(dict_clust_i[x]),
+                                        key=dict_clust_i[x].count)
+
+    ad_input.uns['cluster_clone'] = mat_clust_clone
+    df_time = ad_input.obs[anno_time]
     mat_clust_pdist = ad_input.uns['cluster_pdist']
 
     time_sorted = np.unique(ad_input.obs[anno_time])

@@ -4,6 +4,9 @@ from ._distance import (
     clone_distance,
     set_clone_distance,
 )
+
+from ._geodesic import build_graph
+
 from ._general import (
     cluster_clones,
     subset_clones
