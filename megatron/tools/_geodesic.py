@@ -1,6 +1,8 @@
 """Functions for graph-based geodesic distance"""
 
+from multiprocessing.sharedctypes import Value
 import numpy as np
+import pandas as pd
 import itertools
 import collections
 import networkx as nx
@@ -38,7 +40,7 @@ def _average_geodesic(ad_input,
         It can be converted into a redundant square matrix using `squareform`
         from Scipy.
     """
-    
+
     if use_weight and weight_time is not None:
         assert isinstance(weight_time, dict), "`weight_time` must be dict"
         anno_time = ad_input.uns['params']['anno_time']
@@ -71,7 +73,7 @@ def build_graph(adata,
     obsm: `str`
         Name of matrix in adata.obsm used to construct the graph
     ...
-    
+
     Returns
     -------
     Updates adata with the following fields.
@@ -88,7 +90,6 @@ def build_graph(adata,
         A  k-nearest neighbors graph
     """
     mat_coord = adata.obsm[obsm]
-    
 
     if adata.shape[0] < n_clusters:
         print("The number of samples is smaller than `n_clusters`")
@@ -110,7 +111,7 @@ def build_graph(adata,
 
     # Build a KNN graph
     mat_dist = squareform(pdist(clust_pos, metric=metric))
-    
+
     nbrs = NearestNeighbors(n_neighbors=k_,
                             metric='precomputed').fit(mat_dist)
     mat_knn = nbrs.kneighbors_graph(mat_dist, mode='distance')
@@ -203,6 +204,7 @@ def build_graph(adata,
 #                                                 weight='dist')
 #             G.add_edges_from(tree_i_t.to_undirected().edges(data=True))
 #     return G
+
 
 def _cal_geodesic_dist(G,
                        mat_clust_clone,
@@ -464,3 +466,31 @@ def _pairwise_geodesic_dist(ad_input,
 #     with multiprocessing.Pool(processes=n_jobs) as pool:
 #         list_dist = pool.starmap(_cal_geodesic_dist, list_param)
 #     return list_dist
+
+
+def calculate_pseudotime(adata, roots):
+    if 'cluster_edgelist' not in adata.uns:
+        raise ValueError(
+            "cluster_edgelist not found in adata.uns, construct k-NN graph first")
+
+    G = nx.from_pandas_edgelist(adata.uns['cluster_edgelist'])
+
+    current_level = roots
+    next_level = set()
+    depth = 0
+    depths = dict()
+    # depths = {root: 0}
+
+    while current_level:
+        next_level = set()
+        for node in current_level:
+            depths[node] = depth
+            next_level.update((n for n in G.neighbors(
+                node) if n not in depths and n not in current_level))
+        depth += 1
+        current_level = next_level
+
+    adata.uns['cluster_pseudotime'] = pd.DataFrame(
+        {'cluster': depths.keys(), 'pseudotime': depths.values()}).set_index('cluster')
+
+    # adata.obs['pseudotime'] = adata.uns['cluster_pseudotime'].loc[adata.obs['cluster']].values
