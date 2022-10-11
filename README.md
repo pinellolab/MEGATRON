@@ -4,12 +4,17 @@
 
 **MEGA** **TR**ajectories of cl**ON**es
 
+![megatron](./docs/source/_static/img/logo_200x204.png?raw=true)
+
 MEGATRON, is a Python package to process and interactively visualize clonal trajectories and based on the idea of metaclones. Briefly metaclones are groups of clones that share similar transcriptomic or epigenomic profiles across time points and developmental trajectories. Based on this grouping we can create consensus trajectories i.e. trajectories that summarize similar clones with shared fates. We have tested this method on  recent lineage tracing technologies (Larry, CellTagging, profiling of mitochrondial mutations in scATAC-seq) that simultaneously track clonal relationships and transcriptional or chromatin accessibility states. 
 
 MEGATRON also enable the dection of important genes or transcription factor binding events associated with each metaclone or diverging between two selected metaclones. Importantly, metaclones can partially overlap in the same embedding space, therefore potential enabling to discover of early events associated with cell fate not detacable by current discrete clusetering analyses.
 
 
-![megatron](./docs/source/_static/img/logo_200x204.png?raw=true)
+## Installation
+
+To install MEGATRON please...
+
 
 ## Datasets
 
