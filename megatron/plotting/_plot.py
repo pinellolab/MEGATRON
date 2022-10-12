@@ -1621,35 +1621,29 @@ def cluster_graph(adata,
                   obsm=None,
                   force=False,
                   **kwargs):
-    if obsm is None and 'cluster_edgelist' not in adata.uns:
-        raise ValueError(
-            "Must provide an observation matrix or have already built graph with tl.build_graph")
-    if obsm is not None:
-        if obsm not in adata.obsm:
-            raise ValueError(f'{obsm} not found in adata.obsm')
-        if 'cluster_edgelist' in adata.uns and not force:
-            raise ValueError(
-                f'graph already built, set obsm=None to use previous or set force=True to clobber')
+    if obsm is None or obsm not in adata.obsm:
+        raise ValueError(f'{obsm} not found in adata.obsm')
+    if 'cluster_edgelist' in adata.uns and not force:
+        print('graph already built, using previous (set force=True to clobber)')
+    else:
         print(f"Building k-NN graph based on coordinates in obsm.{obsm}")
         build_graph(adata, obsm=obsm)
 
+    ax = clones(adata, obsm=obsm, copy=True)[0]
     G = nx.from_pandas_edgelist(adata.uns['cluster_edgelist'])
     nx.draw(G, pos=adata.uns['cluster_pos'], with_labels=True,
-            font_color='white', **kwargs)
+            font_color='white', ax=ax, **kwargs)
+    # plt.show()
 
 
 def cluster_pie_graph(adata,
                       obsm=None,
                       force=False):
-    if obsm is None and 'cluster_edgelist' not in adata.uns:
-        raise ValueError(
-            "Must provide an observation matrix or have already built graph with tl.build_graph")
-    if obsm is not None:
-        if obsm not in adata.obsm:
-            raise ValueError(f'{obsm} not found in adata.obsm')
-        if 'cluster_edgelist' in adata.uns and not force:
-            raise ValueError(
-                f'graph already built, set obsm=None to use previous or set force=True to clobber')
+    if obsm is None or obsm not in adata.obsm:
+        raise ValueError(f'{obsm} not found in adata.obsm')
+    if 'cluster_edgelist' in adata.uns and not force:
+        print('graph already built, using previous (set force=True to clobber)')
+    else:
         print(f"Building k-NN graph based on coordinates in obsm.{obsm}")
         build_graph(adata, obsm=obsm)
 
@@ -1657,7 +1651,7 @@ def cluster_pie_graph(adata,
 
     def _draw_pie_marker(xs, ys, ratios, sizes, colors, ax):
 
-        assert sum(ratios) <= 1+1e-6, 'sum of ratios needs to be < 1'
+        assert sum(ratios) <= 1+1e-6, 'sum of ratios needs to be ~1'
 
         markers = []
         previous = 0
@@ -1685,7 +1679,7 @@ def cluster_pie_graph(adata,
                                             str(i) for i in range(1, n_metaclones+1)] + ["0"])
     clust_pos = adata.uns['cluster_pos']
 
-    ax = plt.axes()
+    ax = clones(adata, obsm=obsm, copy=True)[0]
     nx.draw_networkx_edges(G, pos=clust_pos, ax=ax)
 
     for i in range(clust_pos.shape[0]):
@@ -1697,3 +1691,5 @@ def cluster_pie_graph(adata,
         color_dict = {str(j+1): sns.color_palette()[j]for j in range(4)}
         _draw_pie_marker(clust_pos[i, 0], clust_pos[i, 1], fracs, size, [
                          color_dict[j] for j in cts.index], ax)
+
+    # plt.show()
