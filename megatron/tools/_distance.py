@@ -94,7 +94,7 @@ def _set_dist(adata, target="clone", method="geodesic"):
         "geodesic",
         "mnn",
         "wasserstein",
-        "sinkhorn",
+        "centroid",
     ], f"unrecognized method {method}"
     if f"distance_{method}" in adata.uns[target].keys():
         adata.uns[target]["distance"] = adata.uns[target][
