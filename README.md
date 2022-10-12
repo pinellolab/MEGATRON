@@ -13,7 +13,9 @@ MEGATRON also enable the dection of important genes or transcription factor bind
 
 ## Installation
 
-To install MEGATRON please...
+```bash
+pip install git+https://github.com/pinellolab/MEGATRON
+```
 
 
 ## Datasets
