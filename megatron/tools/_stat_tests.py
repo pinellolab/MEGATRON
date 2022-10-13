@@ -133,7 +133,7 @@ def differential_test_vars(adata,
         with multiprocessing.Pool(processes=n_jobs) as pool:
             results = pool.map(test_gene_adata, adata.var_names)
     else:
-        results = map(test_gene_adata, adata.var_names)
+        results = list(map(test_gene_adata, adata.var_names))
 
     coefs, p_values = zip(*results)
     p_values
