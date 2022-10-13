@@ -11,5 +11,7 @@ from ._plot import (
     clone_dendrogram,
     scatter,
     scatter_3d,
-    clones
+    clones,
+    cluster_graph,
+    cluster_pie_graph,
 )
