@@ -1682,13 +1682,13 @@ def cluster_pie_graph(adata,
     ax = clones(adata, obsm=obsm, copy=True)[0]
     nx.draw_networkx_edges(G, pos=clust_pos, ax=ax)
 
+    color_dict = generate_palette(adata.obs['metaclone'])
     for i in range(clust_pos.shape[0]):
         metaclone_counts_by_cluster = adata.obs.value_counts(
             ['cluster', 'metaclone'])
         cts = metaclone_counts_by_cluster[i, :]
         size = cts.sum()
         fracs = cts/cts.sum()
-        color_dict = {str(j+1): sns.color_palette()[j]for j in range(4)}
         _draw_pie_marker(clust_pos[i, 0], clust_pos[i, 1], fracs, size, [
                          color_dict[j] for j in cts.index], ax)
 
