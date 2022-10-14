@@ -64,11 +64,15 @@ Geodesic distance is a graph-based method for calculating the distance between c
 
 ## Tutorials
 
-* [larry_subset](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/larry_subset.ipynb)
-* [larry](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/larry_with_original_coordinates.ipynb)
-* [celltagging_clone_traj](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/celltagging_with_original_coordinates.ipynb)
+* [Complete LARRY dataset (Lineage & RNA recovery)](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/larry_with_original_coordinates.ipynb)
+    * 130,887 cells across 5,864 clones
+* [Subset of LARRY](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/larry_subset.ipynb)
+    * 3,221 cells across 365 clones
+* [CellTagging](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/celltagging_with_original_coordinates.ipynb)
+    * 18,076 cells across 510 clones
 * [mtscATAC-CD34invitro](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/mtscATAC-CD34invitro.ipynb)
-
+    * 18,259 cells across 197 clones
+   
 <!--* [larry_subset_3dplot](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/larry_subset_3dplot.ipynb)-->
 <!--* [larry](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/larry.ipynb)-->
 <!--* [celltagging_clone_traj](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/celltagging_clone_traj.ipynb)-->
