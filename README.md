@@ -1,14 +1,26 @@
-[![CI](https://github.com/pinellolab/megatron/actions/workflows/CI.yml/badge.svg)](https://github.com/pinellolab/MEGATRON/actions/workflows/CI.yml)
+<h1 align="center"><img src="./docs/source/_static/img/logo_200x204.png?raw=true" width="100px"> MEGATRON (MEGA TRajectories of clONes)<img src="./docs/source/_static/img/logo_200x204.png?raw=true" width="100px"></h1>
+<p align="center">
+  <a href="https://github.com/pinellolab/MEGATRON/actions/workflows/CI.yml"><img alt="CI Status" src="https://github.com/pinellolab/megatron/actions/workflows/CI.yml/badge.svg"></a>
+</p>
 
-# MEGATRON
+## Table of Contents
+- [Introduction](#introduction)
+- [Installation](#installation)
+- [Datasets](#datasets)
+- [Distances](#distances)
+  * [Centroids](#centroids)
+  * [Wasserstein](#wasserstein)
+  * [Multi Neighbor Network (MNN)](#multi-neighbor-network-mnn)
+  * [Geodesic](#geodesic)
+- [Tutorials](#tutorials)
 
-**MEGA** **TR**ajectories of cl**ON**es
-
-![megatron](./docs/source/_static/img/logo_200x204.png?raw=true)
+## Introduction
 
 MEGATRON, is a Python package to process and interactively visualize clonal trajectories and based on the idea of metaclones. Briefly metaclones are groups of clones that share similar transcriptomic or epigenomic profiles across time points and developmental trajectories. Based on this grouping we can create consensus trajectories i.e. trajectories that summarize similar clones with shared fates. We have tested this method on  recent lineage tracing technologies (Larry, CellTagging, profiling of mitochrondial mutations in scATAC-seq) that simultaneously track clonal relationships and transcriptional or chromatin accessibility states. 
 
 MEGATRON also enable the dection of important genes or transcription factor binding events associated with each metaclone or diverging between two selected metaclones. Importantly, metaclones can partially overlap in the same embedding space, therefore potential enabling to discover of early events associated with cell fate not detacable by current discrete clusetering analyses.
+
+
 
 
 ## Installation
@@ -39,7 +51,7 @@ The Wasserstein distance relies on the 1-dimensional earth mover's distance (den
 
 For every dimension, this distance calculates W(c_i,t, c_j,t). Then, these values are averaged over all timepoints t and all dimensions. The resulting average is D(i,j). Thus, clonal trajectories whose cells at a given timepoint are embedded adjacent to one another require less work to transform into each other and have smaller distances between them.
 
-### Multi-Neighbor Network (MNN)
+### Multi Neighbor Network (MNN)
 For all cells, the MNN distance first computes either a K-nearest neighbors graph or a radius graph from the embedding data (the parameters for K or exact radius should be provided by the user, although we provide sensible defaults). This neighbors network is then queried for all c_i and c_j. The set of neighbors of c_i is denoted as cn_i. We reasoned that clonal trajectories that follow similar paths over time should have neighbors belonging to the other clone.
 
 We first calculate the fraction of cn_i,t belonging to c_j,t and the fraction of cn_j,t belonging to c_i,t. The reciprocal of these values is averaged to provide D(i,j).
