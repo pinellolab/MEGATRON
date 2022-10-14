@@ -1,24 +1,24 @@
-from multiprocessing.sharedctypes import Value
+import multiprocessing
+import functools
+import pandas as pd
+import numpy as np
+
+from scipy.sparse import issparse
 from scipy.stats import ttest_ind, mannwhitneyu
 from statsmodels.stats.multitest import fdrcorrection
 from statsmodels.regression.mixed_linear_model import MixedLM
 
 
-import functools
-import pandas as pd
-import numpy as np
-
-
-def _ttest_single_var(adata,
-                      gene,
-                      clone1=None,
-                      clone2=None,
-                      layer=None,
-                      batch=None,
-                      clone_anno='X_clone',
-                      anno_type='hierarchical',
-                      test='wilcoxon'
-                      ):
+def _test_single_var(adata,
+                     gene,
+                     clone1=None,
+                     clone2=None,
+                     layer=None,
+                     batch=None,
+                     clone_anno='X_clone',
+                     anno_type='hierarchical',
+                     test='wilcoxon'
+                     ):
 
     if anno_type not in adata.uns['clone']['anno']:
         raise ValueError(
@@ -26,10 +26,13 @@ def _ttest_single_var(adata,
 
     # get observations and metaclone annotations
     if layer is None:
-        X = adata[:, gene].X.copy()
+        X = adata[:, gene].X
     else:
-        X = adata[:, gene].layers[layer].copy()
+        X = adata[:, gene].layers[layer]
     # X_norm = (X-X.mean())
+    if issparse(X):
+        X = X.toarray()
+    # print(X.shape)
     clone_metaclone = adata.uns['clone']['anno'][anno_type]
 
     # assert same number of clones in obsm and uns['clone']['anno']
@@ -72,7 +75,8 @@ def differential_test_vars(adata,
                            clone_cluster_2,
                            layer=None,
                            batch=None,
-                           test='wilcoxon'):
+                           test='wilcoxon',
+                           n_jobs=1):
     """perform a differential expression/accessibility/etc. test
     Parameters
     ----------
@@ -117,7 +121,7 @@ def differential_test_vars(adata,
 
     # run test for all genes
     test_gene_adata = functools.partial(
-        _ttest_single_var,
+        _test_single_var,
         adata,
         clone1=clone_cluster_1,
         clone2=clone_cluster_2,
@@ -125,19 +129,26 @@ def differential_test_vars(adata,
         test=test
     )
 
-    results = list(map(test_gene_adata, adata.var_names))
+    if n_jobs > 1:
+        with multiprocessing.Pool(processes=n_jobs) as pool:
+            results = pool.map(test_gene_adata, adata.var_names)
+    else:
+        results = list(map(test_gene_adata, adata.var_names))
+
     coefs, p_values = zip(*results)
     p_values
 
-    lmm_df = pd.DataFrame({'coef': coefs,
-                           'p_value': p_values,
-                           'gene': adata.var_names,
-                           })
+    results_df = pd.DataFrame({'coef': coefs,
+                               'p_value': p_values,
+                               'gene': adata.var_names,
+                               })
 
-    lmm_df = lmm_df.dropna().sort_values('p_value')
+    results_df = results_df.dropna().sort_values('p_value')
+    if len(results_df) != len(results):
+        print(f"Dropped {len(results)-len(results_df)} NaN test results")
 
-    _, p_value_corr = fdrcorrection(lmm_df['p_value'])
+    _, p_value_corr = fdrcorrection(results_df['p_value'])
 
-    lmm_df = lmm_df.assign(p_value_corr=p_value_corr)
+    results_df = results_df.assign(p_value_corr=p_value_corr)
 
-    adata.uns[f'{test}_MEGATRON'] = lmm_df
+    adata.uns[f'{test}_MEGATRON'] = results_df
