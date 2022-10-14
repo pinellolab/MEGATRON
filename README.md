@@ -1,7 +1,6 @@
+[![CI](https://github.com/pinellolab/megatron/actions/workflows/CI.yml/badge.svg)](https://github.com/pinellolab/MEGATRON/actions/workflows/CI.yml)
+
 <h1 align="center"><img src="./docs/source/_static/img/logo_200x204.png?raw=true" width="100px"> MEGATRON (MEGA TRajectories of clONes)<img src="./docs/source/_static/img/logo_200x204.png?raw=true" width="100px"></h1>
-<p align="center">
-  <a href="https://github.com/pinellolab/MEGATRON/actions/workflows/CI.yml"><img alt="CI Status" src="https://github.com/pinellolab/megatron/actions/workflows/CI.yml/badge.svg"></a>
-</p>
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -57,6 +56,11 @@ For all cells, the MNN distance first computes either a K-nearest neighbors grap
 We first calculate the fraction of cn_i,t belonging to c_j,t and the fraction of cn_j,t belonging to c_i,t. The reciprocal of these values is averaged to provide D(i,j).
 
 ### Geodesic
+Geodesic distance is a graph-based method for calculating the distance between clones. It can leverage the temporal information (if such information is not available, cells are considered to be of the same timepoint). Geodesic distance consists of four major steps: 
+- building a connected k-nearest neighbor (KNN) graph. Briefly, cells are first over-clustered. Then an initial KNN graph is built on these clusters. To ensure that it is a connected graph, Kruskal’s algorithm is used to build a minimum spanning tree (MST) on the complete graph of these clusters. Finally, both the KNN graph and MST are combined to build a connected KNN graph;
+- converting clones of cells into clones of nodes (clusters). Each clone will be represented by a set of nodes for the purpose of robustness and computational efficiency. For each node of each clone, the temporal labels of cells belonging to it will be preserved and the label of this node will be decided by a majority vote algorithm;
+- searching for the peer nodes. Given a pair of clones, for each node of one clone, its peer node is defined as the nearest node of the closest timepoint from the other clone;
+- calculating the final distance. For each node, Dijkstra's algorithm is used to compute the length of the shortest path from this node to its peer node. Within each timepoint, its distance is calculated as the sum of all nodes’ lengths divided by the total number of nodes; The final distance is calculated as the sum of each timepoint’s distance divided by the number of timepoints.
 
 ## Tutorials
 
