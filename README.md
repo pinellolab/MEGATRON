@@ -1,7 +1,6 @@
+[![CI](https://github.com/pinellolab/megatron/actions/workflows/CI.yml/badge.svg)](https://github.com/pinellolab/MEGATRON/actions/workflows/CI.yml)
+
 <h1 align="center"><img src="./docs/source/_static/img/logo_200x204.png?raw=true" width="100px"> MEGATRON (MEGA TRajectories of clONes)<img src="./docs/source/_static/img/logo_200x204.png?raw=true" width="100px"></h1>
-<p align="center">
-  <a href="https://github.com/pinellolab/MEGATRON/actions/workflows/CI.yml"><img alt="CI Status" src="https://github.com/pinellolab/megatron/actions/workflows/CI.yml/badge.svg"></a>
-</p>
 
 ## Table of Contents
 - [Introduction](#introduction)
