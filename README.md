@@ -1,6 +1,6 @@
 [![CI](https://github.com/pinellolab/megatron/actions/workflows/CI.yml/badge.svg)](https://github.com/pinellolab/MEGATRON/actions/workflows/CI.yml)
 
-<h1 align="center"><img src="./docs/source/_static/img/logo_200x204.png?raw=true" width="100px"> MEGATRON (MEGA TRajectories of clONes)<img src="./docs/source/_static/img/logo_200x204.png?raw=true" width="100px"></h1>
+<h1 align="center"><img src="./docs/source/_static/img/logo_200x204.png?raw=true" width="80px"> MEGATRON (MEGA TRajectories of clONes)<img src="./docs/source/_static/img/logo_200x204.png?raw=true" width="80px"></h1>
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -65,9 +65,10 @@ Geodesic distance is a graph-based method for calculating the distance between c
 ## Tutorials
 
 * [larry_subset](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/larry_subset.ipynb)
-* [larry_subset_3dplot](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/larry_subset_3dplot.ipynb)
-* [larry](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/larry.ipynb)
-* [larry(using the coordinates in paper)](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/larry_with_original_coordinates.ipynb)
-* [celltagging_clone_traj](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/celltagging_clone_traj.ipynb)
-* [celltagging_clone_traj(using the coordinates in paper)](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/celltagging_with_original_coordinates.ipynb)
+* [larry](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/larry_with_original_coordinates.ipynb)
+* [celltagging_clone_traj](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/celltagging_with_original_coordinates.ipynb)
 * [mtscATAC-CD34invitro](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/mtscATAC-CD34invitro.ipynb)
+
+<!--* [larry_subset_3dplot](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/larry_subset_3dplot.ipynb)-->
+<!--* [larry](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/larry.ipynb)-->
+<!--* [celltagging_clone_traj](https://github.com/pinellolab/MEGATRON/tree/master/docs/source/_static/notebooks/celltagging_clone_traj.ipynb)-->
