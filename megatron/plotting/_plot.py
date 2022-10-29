@@ -1790,7 +1790,7 @@ def metaclone_lineplot(adata,
            fig_ncol=3,
            save_fig=False,
            fig_path=None,
-           fig_name='plot_metaclone_violin.pdf',
+           fig_name='plot_metaclone_lines.pdf',
            **kwargs):
     """Line plot by metaclone over pseudotime
     """
@@ -1821,6 +1821,8 @@ def metaclone_lineplot(adata,
     
     color_dict = generate_palette(pd.unique(adata.uns['clone']['anno']['hierarchical']))
     df_plot = get_vars_by_metaclone(adata, var_subset=list_var, metaclone_subset=list_metaclone)
+    df_plot = df_plot.query(f'pseudotime<={max_pseudotime}')
+    # df_plot = df_plot.sample(frac = 1, replace=False) # shuffle
     if (log):
         df_plot = df_plot.transform(np.log1p)
 
@@ -1830,6 +1832,16 @@ def metaclone_lineplot(adata,
                                   fig_size[1]*fig_nrow))
         for i, var in enumerate(list_var):
             ax_i = fig.add_subplot(fig_nrow, fig_ncol, i+1)
+            # sns.stripplot(ax=ax_i,
+            #     x='pseudotime',
+            #     y=var,
+            #     hue='metaclone',
+            #     data=df_plot,
+            #     legend=None,
+            #     palette=color_dict,
+            #     size=1.5,
+            #     # native_scale=True, # requires seaborn>=0.12
+            #     **kwargs)
             sns.lineplot(ax=ax_i,
                            x='pseudotime',
                            y=var,
@@ -1838,13 +1850,6 @@ def metaclone_lineplot(adata,
                            legend=None,
                            palette=color_dict,
                            **kwargs)
-            # sns.stripplot(ax=ax_i,
-            #               x='metaclone',
-            #               y=var,
-            #               data=df_plot,
-            #               color='black',
-            #               jitter=jitter,
-            #               s=size)
 
             ax_i.set_title(var)
             ax_i.set_ylabel('')

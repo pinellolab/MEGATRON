@@ -469,9 +469,17 @@ def _pairwise_geodesic_dist(ad_input,
 
 
 def calculate_pseudotime(adata, roots):
+    """
+    Calculate k-NN graph-based pseudotime from chosen root node(s).
+    Updates adata.obs['pseudotime']
+    """
     if 'cluster_edgelist' not in adata.uns:
         raise ValueError(
             "cluster_edgelist not found in adata.uns, construct k-NN graph first")
+    if 'cluster' not in adata.obs_keys():
+        raise ValueError(
+            "cluster not found in adata.obs, construct k-NN graph first")
+
 
     G = nx.from_pandas_edgelist(adata.uns['cluster_edgelist'])
 
@@ -493,4 +501,6 @@ def calculate_pseudotime(adata, roots):
     adata.uns['cluster_pseudotime'] = pd.DataFrame(
         {'cluster': depths.keys(), 'pseudotime': depths.values()}).set_index('cluster')
 
-    # adata.obs['pseudotime'] = adata.uns['cluster_pseudotime'].loc[adata.obs['cluster']].values
+    # return adata.uns['cluster_pseudotime'].loc[adata.obs['cluster']].values
+    adata.obs['pseudotime'] = adata.uns['cluster_pseudotime'].loc[adata.obs['cluster']].values
+    return adata.obs['pseudotime']
