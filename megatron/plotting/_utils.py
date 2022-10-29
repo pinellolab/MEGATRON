@@ -101,3 +101,40 @@ def generate_palette(arr):
         raise TypeError("unsupported data type for `arr`")
     dict_palette = dict(zip(arr, colors))
     return dict_palette
+
+
+def get_vars_by_metaclone(adata, var_subset=None, metaclone_subset=None, force=False):
+    """
+    Return a "long" pandas DataFrame of observations for each cell 
+    with metaclone information attached.
+    """
+
+    if var_subset is None and metaclone_subset is None and not force:
+        raise Exception("Provide one of var_subset or metaclone_subset, or set 'force=True' to return a df for all vars + cells.")
+    
+    if var_subset is None:
+            var_subset = adata.var_names
+
+    metaclones = sorted(pd.unique(adata.uns['clone']['anno']['hierarchical']))
+
+    if metaclone_subset is None:
+        metaclone_subset = metaclones
+    
+    clone_x_metaclone = pd.get_dummies(adata.uns['clone']['anno']).values
+    cell_x_clone = adata.obsm['X_clone']
+    cell_x_metaclone = (cell_x_clone @ clone_x_metaclone).astype(bool)
+    n_cells, n_metaclones = cell_x_metaclone.shape
+    
+    def _get_metaclone_observations(j):
+        if metaclones[j] not in metaclone_subset:
+            return None
+        
+        adata_subset = adata[:,var_subset][cell_x_metaclone[:,j],:]
+        subset_df = pd.DataFrame(adata_subset.X.todense(), columns=list(var_subset))
+        subset_df = subset_df.assign(metaclone=metaclones[j])
+        if 'pseudotime' in adata_subset.obs_keys():
+            subset_df=subset_df.assign(pseudotime=adata_subset.obs['pseudotime'].values)
+        # subset_df=subset_df.melt(id_vars=['pseudotime'], var_name='gene').assign(metaclone=metaclones[j])
+        return subset_df
+
+    return pd.concat(map(_get_metaclone_observations, range(n_metaclones))).reset_index(drop=True)

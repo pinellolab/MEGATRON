@@ -1,5 +1,6 @@
 """plotting functions"""
 
+from cmath import inf
 import os
 import numpy as np
 import pandas as pd
@@ -23,7 +24,8 @@ import plotly.express as px
 
 from .._settings import settings
 from ._utils import (
-    generate_palette
+    generate_palette,
+    get_vars_by_metaclone
 )
 from ..tools._geodesic import build_graph
 
@@ -1692,4 +1694,170 @@ def cluster_pie_graph(adata,
         _draw_pie_marker(clust_pos[i, 0], clust_pos[i, 1], fracs, size, [
                          color_dict[j] for j in cts.index], ax)
 
-    # plt.show()
+
+def metaclone_violin(adata,
+           list_var=None,
+           list_metaclone=None,
+           jitter=0.4,
+           alpha=1,
+           size=1,
+           log=False,
+           pad=1.08,
+           w_pad=None,
+           h_pad=3,
+           fig_size=(3, 3),
+           fig_ncol=3,
+           save_fig=False,
+           fig_path=None,
+           fig_name='plot_metaclone_violin.pdf',
+           **kwargs):
+    """Violin plot by metaclone
+    """
+
+    if fig_size is None:
+        fig_size = mpl.rcParams['figure.figsize']
+    if save_fig is None:
+        save_fig = settings.save_fig
+    if fig_path is None:
+        fig_path = os.path.join(settings.workdir, 'figures')
+    
+    metaclones = sorted(pd.unique(adata.uns['clone']['anno']['hierarchical']))
+    if list_metaclone is None:
+        list_metaclone = list(metaclones)
+    if list_var is None:
+        list_var = []
+
+    for meta in list_metaclone:
+        if (meta not in metaclones):
+            raise ValueError(f"could not find {meta} in `adata.uns['clone']['anno']`")
+    for var in list_var:
+        if (var not in adata.var_names):
+            raise ValueError(f"could not find {var} in `adata.var_names`")
+    
+    color_dict = generate_palette(pd.unique(adata.uns['clone']['anno']['hierarchical']))
+    df_plot = get_vars_by_metaclone(adata, var_subset=list_var, metaclone_subset=list_metaclone)
+    if (log):
+        df_plot = df_plot.transform(np.log1p)
+
+    if (len(list_var) > 0):
+        fig_nrow = int(np.ceil(len(list_var)/fig_ncol))
+        fig = plt.figure(figsize=(fig_size[0]*fig_ncol*1.05,
+                                  fig_size[1]*fig_nrow))
+        for i, var in enumerate(list_var):
+            ax_i = fig.add_subplot(fig_nrow, fig_ncol, i+1)
+            sns.violinplot(ax=ax_i,
+                           x='metaclone',
+                           y=var,
+                           data=df_plot,
+                           inner=None,
+                           palette=color_dict,
+                           **kwargs)
+            sns.stripplot(ax=ax_i,
+                          x='metaclone',
+                          y=var,
+                          data=df_plot,
+                          color='black',
+                          jitter=jitter,
+                          s=size)
+
+            ax_i.set_title(var)
+            ax_i.set_ylabel('')
+            ax_i.locator_params(axis='y', nbins=6)
+            ax_i.tick_params(axis="y", pad=-2)
+            ax_i.spines['right'].set_visible(False)
+            ax_i.spines['top'].set_visible(False)
+        plt.tight_layout(pad=pad, h_pad=h_pad, w_pad=w_pad)
+        if (save_fig):
+            if (not os.path.exists(fig_path)):
+                os.makedirs(fig_path)
+            plt.savefig(os.path.join(fig_path, fig_name),
+                        pad_inches=1,
+                        bbox_inches='tight')
+            plt.close(fig)
+
+def metaclone_lineplot(adata,
+           list_var=None,
+           list_metaclone=None,
+           max_pseudotime=inf,
+           jitter=0.4,
+           alpha=1,
+           size=1,
+           log=False,
+           pad=1.08,
+           w_pad=None,
+           h_pad=3,
+           fig_size=(3, 3),
+           fig_ncol=3,
+           save_fig=False,
+           fig_path=None,
+           fig_name='plot_metaclone_violin.pdf',
+           **kwargs):
+    """Line plot by metaclone over pseudotime
+    """
+    
+    if 'pseudotime' not in adata.obs_keys():
+        raise ValueError("'pseudotime' not found in adata.obs_keys()")
+
+
+    if fig_size is None:
+        fig_size = mpl.rcParams['figure.figsize']
+    if save_fig is None:
+        save_fig = settings.save_fig
+    if fig_path is None:
+        fig_path = os.path.join(settings.workdir, 'figures')
+    
+    metaclones = sorted(pd.unique(adata.uns['clone']['anno']['hierarchical']))
+    if list_metaclone is None:
+        list_metaclone = list(metaclones)
+    if list_var is None:
+        list_var = []
+
+    for meta in list_metaclone:
+        if (meta not in metaclones):
+            raise ValueError(f"could not find {meta} in `adata.uns['clone']['anno']`")
+    for var in list_var:
+        if (var not in adata.var_names):
+            raise ValueError(f"could not find {var} in `adata.var_names`")
+    
+    color_dict = generate_palette(pd.unique(adata.uns['clone']['anno']['hierarchical']))
+    df_plot = get_vars_by_metaclone(adata, var_subset=list_var, metaclone_subset=list_metaclone)
+    if (log):
+        df_plot = df_plot.transform(np.log1p)
+
+    if (len(list_var) > 0):
+        fig_nrow = int(np.ceil(len(list_var)/fig_ncol))
+        fig = plt.figure(figsize=(fig_size[0]*fig_ncol*1.05,
+                                  fig_size[1]*fig_nrow))
+        for i, var in enumerate(list_var):
+            ax_i = fig.add_subplot(fig_nrow, fig_ncol, i+1)
+            sns.lineplot(ax=ax_i,
+                           x='pseudotime',
+                           y=var,
+                           hue='metaclone',
+                           data=df_plot,
+                           legend=None,
+                           palette=color_dict,
+                           **kwargs)
+            # sns.stripplot(ax=ax_i,
+            #               x='metaclone',
+            #               y=var,
+            #               data=df_plot,
+            #               color='black',
+            #               jitter=jitter,
+            #               s=size)
+
+            ax_i.set_title(var)
+            ax_i.set_ylabel('')
+            ax_i.locator_params(axis='y', nbins=6)
+            ax_i.tick_params(axis="y", pad=-2)
+            ax_i.spines['right'].set_visible(False)
+            ax_i.spines['top'].set_visible(False)
+        
+        plt.tight_layout(pad=pad, h_pad=h_pad, w_pad=w_pad)
+        if (save_fig):
+            if (not os.path.exists(fig_path)):
+                os.makedirs(fig_path)
+            plt.savefig(os.path.join(fig_path, fig_name),
+                        pad_inches=1,
+                        bbox_inches='tight')
+            plt.close(fig)
