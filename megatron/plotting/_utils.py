@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+from scipy.sparse import issparse
 from pandas.api.types import (
     is_numeric_dtype,
     is_string_dtype,
@@ -130,7 +131,10 @@ def get_vars_by_metaclone(adata, var_subset=None, metaclone_subset=None, force=F
             return None
         
         adata_subset = adata[:,var_subset][cell_x_metaclone[:,j],:]
-        subset_df = pd.DataFrame(adata_subset.X.todense(), columns=list(var_subset))
+        observations = adata_subset.X.copy()
+        if issparse(observations):
+            observations = observations.todense()
+        subset_df = pd.DataFrame(np.asarray(observations), columns=list(var_subset))
         subset_df = subset_df.assign(metaclone=metaclones[j])
         if 'pseudotime' in adata_subset.obs_keys():
             subset_df=subset_df.assign(pseudotime=adata_subset.obs['pseudotime'].values)
