@@ -14,4 +14,6 @@ from ._plot import (
     clones,
     cluster_graph,
     cluster_pie_graph,
+    metaclone_violin,
+    metaclone_lineplot
 )
