@@ -1640,7 +1640,8 @@ def cluster_graph(adata,
 
 def cluster_pie_graph(adata,
                       obsm=None,
-                      force=False):
+                      force=False,
+                      grey_out_ambiguous = True):
     if obsm is None or obsm not in adata.obsm:
         raise ValueError(f'{obsm} not found in adata.obsm')
     if 'cluster_edgelist' in adata.uns and not force:
@@ -1652,8 +1653,8 @@ def cluster_pie_graph(adata,
     G = nx.from_pandas_edgelist(adata.uns['cluster_edgelist'])
 
     def _draw_pie_marker(xs, ys, ratios, sizes, colors, ax):
-
-        assert sum(ratios) <= 1+1e-6, 'sum of ratios needs to be ~1'
+        epsilon = 1e-4
+        assert sum(ratios) <= 1+epsilon, 'sum of ratios needs to be ~1'
 
         markers = []
         previous = 0
@@ -1671,20 +1672,27 @@ def cluster_pie_graph(adata,
         for marker in markers:
             ax.scatter(xs, ys, **marker)
 
-    n_metaclones = int(adata.uns['clone']['anno'].max())
-    assigned_cells, clone_indices = adata.obsm['X_clone'].nonzero()
-    adata.obs['metaclone'] = '0'
-    assigned_barcodes = adata.obs.iloc[assigned_cells].index
-    adata.obs.loc[assigned_barcodes,
-                  'metaclone'] = adata.uns['clone']['anno']['hierarchical'][clone_indices].values
-    adata.obs['metaclone'] = pd.Categorical(adata.obs['metaclone'], categories=[
-                                            str(i) for i in range(1, n_metaclones+1)] + ["0"])
+    clone_metaclone = adata.uns['clone']['anno']
+    clone_anno = adata.uns['clone']['anno']['hierarchical']
+    clone_metaclone_df = pd.get_dummies(clone_anno)
+    cell_metaclone_mat = (adata.obsm['X_clone'] @ clone_metaclone_df.values)
+    n_metaclones_per_cell = (cell_metaclone_mat > 0).astype(int).sum(axis=1)
+    
+    # In case of multiple occurrences of the maximum values, 
+    # the indices corresponding to the first occurrence are returned.
+    adata.obs=adata.obs.assign(metaclone = clone_metaclone_df.columns[cell_metaclone_mat.argmax(axis=1)])
+    color_dict = generate_palette(adata.obs['metaclone'])
+
+    if grey_out_ambiguous:
+        adata.obs.loc[cell_metaclone_mat.sum(axis=1)==0,'metaclone'] = "0"
+        adata.obs.loc[n_metaclones_per_cell>1, 'metaclone'] = "0"
+        color_dict["0"]='darkgrey'
+
     clust_pos = adata.uns['cluster_pos']
 
     ax = clones(adata, obsm=obsm, copy=True)[0]
     nx.draw_networkx_edges(G, pos=clust_pos, ax=ax)
 
-    color_dict = generate_palette(adata.obs['metaclone'])
     for i in range(clust_pos.shape[0]):
         metaclone_counts_by_cluster = adata.obs.value_counts(
             ['cluster', 'metaclone'])
@@ -1693,6 +1701,7 @@ def cluster_pie_graph(adata,
         fracs = cts/cts.sum()
         _draw_pie_marker(clust_pos[i, 0], clust_pos[i, 1], fracs, size, [
                          color_dict[j] for j in cts.index], ax)
+    
 
 
 def metaclone_violin(adata,
